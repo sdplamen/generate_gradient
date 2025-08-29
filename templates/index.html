@@ -1,0 +1,26 @@
+<!DOCTYPE html>
+{% load static %}
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Gradient Generator</title>
+    <link rel="stylesheet" href="{% static 'style.css' %}">
+</head>
+<body>
+    <div class="container">
+        <h1>Gradient Generator</h1>
+        <div class="gradient-box" style="{{ css_code }}"></div>
+        <div class="controls">
+            <form method="GET" action="{% url 'generate_gradient' %}">
+                {{ form.as_p }}
+                <button type="submit" name="random" value="true">Random Colors</button>
+<!--                <button type="submit">Update Gradient</button>-->
+            </form>
+            <div class="css-code-container">
+                <p>CSS Code (select and copy manually):</p>
+                <textarea class="css-code" readonly>{{ css_code }}</textarea>
+            </div>
+        </div>
+    </div>
+</body>
+</html>
