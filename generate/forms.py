@@ -15,7 +15,7 @@ class GradientForm(forms.Form) :
         ('to top', 'To Top'),
     ]
 
-    direction = forms.ChoiceField(choices=DIRECTION_CHOICES, initial='to right')
+    direction = forms.ChoiceField(choices=DIRECTION_CHOICES, initial='to top')
     color1 = forms.CharField(max_length=7, initial=get_random_color, widget=forms.TextInput(attrs={'type': 'color'}))
     color2 = forms.CharField(max_length=7, initial=get_random_color, widget=forms.TextInput(attrs={'type': 'color'}))
     color3 = forms.CharField(max_length=7, initial=get_random_color, widget=forms.TextInput(attrs={'type': 'color'}))
