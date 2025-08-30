@@ -62,10 +62,10 @@ jobs:
           tenant-id: ${{ secrets.AZUREAPPSERVICE_TENANTID_1A20CB8FD80E4C539489F8B80209D4E1 }}
           subscription-id: ${{ secrets.AZUREAPPSERVICE_SUBSCRIPTIONID_E2CF19CB95AD4057976B260F8C738408 }}
 
-      - name: 'Deploy to Azure Web App'
-        uses: azure/webapps-deploy@v3
-        id: deploy-to-webapp
+      - name: Deploy to Azure Web App
+        uses: azure/webapps-deploy@v2
         with:
-          app-name: 'gradients'
-          slot-name: 'Production'
+          app-name: gradients
+          slot-name: null
+
           
