@@ -24,8 +24,8 @@ def generate_gradient(request):
             ]
 
         initial_data = {
-            'direction' :direction,
-            'random' :form.cleaned_data['random']
+            'direction': direction,
+            'random': form.cleaned_data['random']
         }
         for i, color in enumerate(colors) :
             initial_data[f'color{i + 1}'] = color
