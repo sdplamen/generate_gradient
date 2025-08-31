@@ -10,25 +10,34 @@ from generate.serializers import GradientSerializer
 # Create your views here.
 def generate_gradient(request):
     form = GradientForm(request.GET or None)
-    direction = 'to right'
+    direction = 'to top'
+    colors = [get_random_color() for _ in range(6)]
 
-    if form.is_valid() :
+    if form.is_valid():
         direction = form.cleaned_data['direction']
         if form.cleaned_data['random']:
             colors = [get_random_color() for _ in range(6)]
-        else :
+        else:
             colors = [
-                form.cleaned_data[f'color{i + 1}'] or get_random_color()
+                form.cleaned_data[f'color{i + 1}']
                 for i in range(6)
             ]
 
-    colors = [get_random_color() for _ in range(6)]
+        initial_data = {
+            'direction' :direction,
+            'random' :form.cleaned_data['random']
+        }
+        for i, color in enumerate(colors) :
+            initial_data[f'color{i + 1}'] = color
+
+        form = GradientForm(initial=initial_data)
+
     gradient = f"linear-gradient({direction}, {', '.join(colors)})"
 
     context = {
         'form': form,
         'gradient': gradient,
-        'css_code': f"background: {gradient};"
+        'css_code': f'background: {gradient};'
     }
 
     return render(request, 'index.html', context)
