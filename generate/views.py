@@ -1,5 +1,6 @@
 from django.shortcuts import render
-from generate.forms import GradientForm, get_random_color
+from rest_framework.templatetags.rest_framework import data
+from generate.forms import GradientForm, get_gradient_colors
 from rest_framework.views import APIView
 from rest_framework.response import Response
 from rest_framework import status
@@ -11,39 +12,28 @@ from generate.serializers import GradientSerializer
 def generate_gradient(request):
     form = GradientForm(request.GET or None)
     direction = 'to top'
-    colors = [get_random_color() for _ in range(6)]
+    colors = get_gradient_colors()
 
     if form.is_valid():
         direction = form.cleaned_data['direction']
+
         if form.cleaned_data['random']:
-            colors = [get_random_color() for _ in range(6)]
+            form = GradientForm(initial={f'color{i + 1}': colors[i] for i in range(6)})
         else:
-            colors = [
-                form.cleaned_data[f'color{i + 1}']
-                for i in range(6)
-            ]
+            colors = [form.cleaned_data[f'color{i + 1}'] for i in range(6)]
 
-        initial_data = {
-            'direction': direction,
-            'random': form.cleaned_data['random']
-        }
-        for i, color in enumerate(colors) :
-            initial_data[f'color{i + 1}'] = color
-
-        form = GradientForm(initial=initial_data)
-
-    gradient = f"linear-gradient({direction}, {', '.join(colors)})"
+    gradient = f'linear-gradient({direction}, {", ".join(colors)})'
+    css_code = f'background: {gradient};'
 
     context = {
         'form': form,
         'gradient': gradient,
-        'css_code': f'background: {gradient};'
+        'css_code': css_code
     }
 
     return render(request, 'index.html', context)
 
-
-class GradientAPIView(APIView) :
+class GradientAPIView(APIView):
     @extend_schema(
         parameters=[
             OpenApiParameter(
@@ -52,7 +42,7 @@ class GradientAPIView(APIView) :
                 location=OpenApiParameter.QUERY,
                 description='Gradient direction (e.g., "to right", "to left", "to bottom", "to top")',
                 enum=['to right', 'to left', 'to bottom', 'to top'],
-                default='to right'
+                default='to top'
             ),
             OpenApiParameter(
                 name='color1',
@@ -100,41 +90,36 @@ class GradientAPIView(APIView) :
                 name='random',
                 type=bool,
                 location=OpenApiParameter.QUERY,
-                description='Set to true to generate random colors',
+                description='Set to true to generate random gradient colors',
                 default=False
             )
         ],
         responses={200: GradientSerializer},
-        description='Generate a CSS linear gradient based on provided colors and direction, or random colors if requested.'
+        description='Generate a CSS linear gradient based on provided colors and direction, or random gradient colors if requested.'
     )
-    def get(self, request) :
+    def get(self, request):
         form = GradientForm(request.GET or None)
+        direction = 'to top'
+        colors = get_gradient_colors()
 
-        if not form.is_valid() :
-            return Response(form.errors, status=status.HTTP_400_BAD_REQUEST)
+        if form.is_valid():
+            direction = form.cleaned_data['direction']
 
-        direction = form.cleaned_data['direction']
-        colors = []
+            if form.cleaned_data['random'] :
+                form = GradientForm(initial={f'color{i + 1}' :colors[i] for i in range(6)})
+            else:
+                colors = [form.cleaned_data[f'color{i + 1}'] for i in range(6)]
 
-        if form.cleaned_data['random'] :
-            colors = [get_random_color() for _ in range(6)]
-        else :
-            colors = [
-                form.cleaned_data[f'color{i + 1}'] or get_random_color()
-                for i in range(6)
-            ]
+        gradient = f'linear-gradient({direction}, {", ".join(colors)})'
+        css_code = f'background: {gradient};'
 
-        gradient = f"linear-gradient({direction}, {', '.join(colors)})"
-        css_code = f"background: {gradient};"
-
-        data = {
-            'direction': direction,
-            'colors': colors,
+        context = {
+            'form': form,
             'gradient': gradient,
             'css_code': css_code
         }
 
         serializer = GradientSerializer(data=data)
-        if serializer.is_valid() :
+        if serializer.is_valid():
             return Response(serializer.data, status=status.HTTP_200_OK)
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
