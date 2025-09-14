@@ -49,6 +49,11 @@ label {
     margin-right: 10px;
 }
 
+.saved-palettes a {
+    color: #ffffcc;
+    text-decoration: none;
+}
+
 .css-code-container {
     margin-top: 20px;
 }

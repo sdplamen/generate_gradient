@@ -25,15 +25,15 @@
                         </p>
                     {% endif %}
                 {% endfor %}
-                <p>
-                    <label for="direction_choice">Direction:</label>
-                    <select name="direction" id="direction_choice">
-                        <option value="to top" {% if direction == 'to top' %}selected{% endif %}>To Top</option>
-                        <option value="to right" {% if direction == 'to right' %}selected{% endif %}>To Right</option>
-                        <option value="to bottom" {% if direction == 'to bottom' %}selected{% endif %}>To Bottom</option>
-                        <option value="to left" {% if direction == 'to left' %}selected{% endif %}>To Left</option>
-                    </select>
-                </p>
+<!--                <p>-->
+<!--                    <label for="direction_choice">Direction:</label>-->
+<!--                    <select name="direction" id="direction_choice">-->
+<!--                        <option value="to top" {% if direction == 'to top' %}selected{% endif %}>To Top</option>-->
+<!--                        <option value="to right" {% if direction == 'to right' %}selected{% endif %}>To Right</option>-->
+<!--                        <option value="to bottom" {% if direction == 'to bottom' %}selected{% endif %}>To Bottom</option>-->
+<!--                        <option value="to left" {% if direction == 'to left' %}selected{% endif %}>To Left</option>-->
+<!--                    </select>-->
+<!--                </p>-->
                 <button type="submit">Update Gradient</button>
             </form>
 
@@ -56,18 +56,20 @@
                 <textarea class="css-code" readonly>{{ css_code }}</textarea>
             </div>
             <div class="saved-palettes">
-                <h2>Saved Palettes</h2>
-                <ul>
-                    {% for palette in saved_palettes %}
-                    <li>
-                        <a href="{% url 'get_palette' palette_id=palette.id %}">
-                            Palette #{{ palette.id }}
-                        </a>
-                    </li>
-                    {% empty %}
-                    <li>No palettes saved yet.</li>
-                    {% endfor %}
-                </ul>
+                <details>
+                    <summary><h2>Saved Palettes</h2></summary>
+                    <ul>
+                        {% for palette in saved_palettes %}
+                        <li>
+                            <a href="{% url 'get_palette' palette_id=palette.id %}">
+                                Palette #{{ palette.id }}
+                            </a>
+                        </li>
+                        {% empty %}
+                        <li>No palettes saved yet.</li>
+                        {% endfor %}
+                    </ul>
+                </details>
             </div>
         </div>
     </div>
