@@ -24,15 +24,15 @@ def get_gradient_colors(num_colors=6, max_step=50) :
     return colors
 
 class GradientForm(forms.Form) :
-    DIRECTION_CHOICES = [
-        ('to right', 'To Right'),
-        ('to left', 'To Left'),
-        ('to bottom', 'To Bottom'),
-        ('to top', 'To Top'),
-    ]
+    # DIRECTION_CHOICES = [
+    #     ('to right', 'To Right'),
+    #     ('to left', 'To Left'),
+    #     ('to bottom', 'To Bottom'),
+    #     ('to top', 'To Top'),
+    # ]
 
     initial_colors = get_gradient_colors()
-    direction = forms.ChoiceField(choices=DIRECTION_CHOICES, initial='to top')
+    # direction = forms.ChoiceField(choices=DIRECTION_CHOICES, initial='to top')
     color1 = forms.CharField(max_length=7, initial=initial_colors[0], widget=forms.TextInput(attrs={'type': 'color'}))
     color2 = forms.CharField(max_length=7, initial=initial_colors[1], widget=forms.TextInput(attrs={'type': 'color'}))
     color3 = forms.CharField(max_length=7, initial=initial_colors[2], widget=forms.TextInput(attrs={'type': 'color'}))

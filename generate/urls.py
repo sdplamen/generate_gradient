@@ -4,6 +4,7 @@ from generate import views
 
 urlpatterns = [
     path('', views.generate_gradient, name='generate_gradient'),
+    path('palette/<int:palette_id>/', views.get_palette, name='get_palette'),
     path('api/gradient/', views.GradientAPIView.as_view(), name='api_gradient'),
     path('api/schema/', SpectacularAPIView.as_view(), name='schema'),
     path('api/schema/swagger-ui/', SpectacularSwaggerView.as_view(url_name='schema'), name='swagger-ui'),

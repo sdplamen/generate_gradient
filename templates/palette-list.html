@@ -1,0 +1,65 @@
+<!DOCTYPE html>
+{% load static %}
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>My Color Palettes</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="{% static 'palette-style.css' %}">
+</head>
+<body class="bg-gray-100 min-h-screen flex items-center justify-center p-4">
+    <div class="w-full max-w-4xl bg-white rounded-xl shadow-2xl p-6 md:p-10 space-y-8">
+        <header class="text-center space-y-2">
+            <h1 class="text-3xl md:text-4xl font-extrabold text-gray-800">My Color Palettes</h1>
+            <p class="text-gray-500">Create, save, and manage your favorite color schemes.</p>
+        </header>
+
+        <!-- Add New Palette Form -->
+        <section class="bg-gray-50 p-6 rounded-lg shadow-inner">
+            <h2 class="text-2xl font-semibold text-gray-700 mb-4">Add a New Palette</h2>
+            <form action="{% url 'palette-list' %}" method="post" class="space-y-4">
+                {% csrf_token %}
+                {{ form.as_p }}
+                <button type="submit" class="w-full py-2 px-4 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-indigo-600 hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 transition ease-in-out duration-150">
+                    Save Palette
+                </button>
+            </form>
+        </section>
+
+        <!-- Palettes List -->
+        <section>
+            <h2 class="text-2xl font-semibold text-gray-700 mb-4">Saved Palettes</h2>
+            <div id="palettes-container" class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
+                {% for palette in palettes %}
+                <div class="bg-white rounded-xl shadow-md p-5 border border-gray-200 space-y-4">
+                    <div class="flex items-center justify-between">
+                        <h3 class="text-xl font-semibold text-gray-800">{{ palette.name }}</h3>
+                        <div class="flex space-x-2">
+                            <a href="{% url 'edit-palette' palette.pk %}" class="edit-btn p-2 rounded-full text-blue-600 hover:bg-blue-100 transition">
+                                <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
+                                    <path d="M13.586 3.586a2 2 0 112.828 2.828l-.793.793-2.828-2.828.793-.793zm-5.452 4.195l-.768.768a1.5 1.5 0 01-2.122 0l-3.327-3.328a1.5 1.5 0 010-2.122l.768-.768a1.5 1.5 0 012.122 0l3.327 3.327a1.5 1.5 0 010 2.122zM6.025 8.354a2.5 2.5 0 10-3.536 3.535l1.636 1.636 1.77-1.77-1.636-1.635z" />
+                                    <path fill-rule="evenodd" d="M4 16a2 2 0 012-2h4a2 2 0 110 4H6a2 2 0 01-2-2z" clip-rule="evenodd" />
+                                </svg>
+                            </a>
+                            <a href="{% url 'delete-palette' palette.pk %}" class="delete-btn p-2 rounded-full text-red-600 hover:bg-red-100 transition">
+                                <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
+                                    <path fill-rule="evenodd" d="M9 2a1 1 0 01.993.883L10 3v1a1 1 0 011 1v1h-1v-1a1 1 0 01-1-1v-1a1 1 0 01.993-.883L10 2zM5 4a1 1 0 011 1v1h2V5a1 1 0 012 0v1h2V5a1 1 0 012 0v1h1a1 1 0 011 1v1h1a1 1 0 011 1v7a1 1 0 01-1 1H4a1 1 0 01-1-1V9a1 1 0 011-1h1V7a1 1 0 011-1V5a1 1 0 011-1zM5 9h1v1h-1V9zm2 0h1v1h-1V9zm2 0h1v1h-1V9zm2 0h1v1h-1V9zm2 0h1v1h-1V9z" clip-rule="evenodd" />
+                                </svg>
+                            </a>
+                        </div>
+                    </div>
+                    <div class="flex space-x-2 overflow-x-auto p-1">
+                        {% for color in palette.colors %}
+                        <div class="color-swatch rounded-md shadow" style="background-color: {{ color }};"></div>
+                        {% endfor %}
+                    </div>
+                </div>
+                {% empty %}
+                <p class="text-center text-gray-500 col-span-full">You haven't added any palettes yet. Start by creating one above!</p>
+                {% endfor %}
+            </div>
+        </section>
+    </div>
+</body>
+</html>

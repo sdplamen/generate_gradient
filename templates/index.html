@@ -1,5 +1,6 @@
 <!DOCTYPE html>
 {% load static %}
+{% load custom_filters %}
 <html lang="en">
 <head>
     <meta charset="UTF-8">
@@ -12,13 +13,61 @@
         <div class="gradient-box" style="{{ css_code }}"></div>
         <div class="controls">
             <form method="GET" action="{% url 'generate_gradient' %}">
-                {{ form.as_p }}
-                <button type="submit" name="random" value="true">Random Colors</button>
-<!--                <button type="submit">Update Gradient</button>-->
+                <input type="hidden" name="random" value="false">
+                {% for field in form %}
+                    {% if field.name != 'random' %}
+                        <p>
+                            {{ field.label_tag }}
+                            {{ field }}
+                            {% if field.help_text %}
+                                <span class="helptext">{{ field.help_text }}</span>
+                            {% endif %}
+                        </p>
+                    {% endif %}
+                {% endfor %}
+                <p>
+                    <label for="direction_choice">Direction:</label>
+                    <select name="direction" id="direction_choice">
+                        <option value="to top" {% if direction == 'to top' %}selected{% endif %}>To Top</option>
+                        <option value="to right" {% if direction == 'to right' %}selected{% endif %}>To Right</option>
+                        <option value="to bottom" {% if direction == 'to bottom' %}selected{% endif %}>To Bottom</option>
+                        <option value="to left" {% if direction == 'to left' %}selected{% endif %}>To Left</option>
+                    </select>
+                </p>
+                <button type="submit">Update Gradient</button>
             </form>
+
+            <form method="GET" action="{% url 'generate_gradient' %}">
+                <input type="hidden" name="direction" value="{{ direction }}">
+                <button type="submit" name="random" value="true">Random Colors</button>
+            </form>
+
+            <form method="POST" action="{% url 'generate_gradient' %}" class="save-form">
+                {% csrf_token %}
+                <input type="hidden" name="direction" value="{{ direction }}">
+                {% for color in colors %}
+                    <input type="hidden" name="color{{ forloop.counter }}" value="{{ color }}">
+                {% endfor %}
+                <button type="submit">Save Palette</button>
+            </form>
+
             <div class="css-code-container">
                 <p>CSS Code (select and copy manually):</p>
                 <textarea class="css-code" readonly>{{ css_code }}</textarea>
+            </div>
+            <div class="saved-palettes">
+                <h2>Saved Palettes</h2>
+                <ul>
+                    {% for palette in saved_palettes %}
+                    <li>
+                        <a href="{% url 'get_palette' palette_id=palette.id %}">
+                            Palette #{{ palette.id }}
+                        </a>
+                    </li>
+                    {% empty %}
+                    <li>No palettes saved yet.</li>
+                    {% endfor %}
+                </ul>
             </div>
         </div>
     </div>
