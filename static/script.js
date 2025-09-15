@@ -1,43 +1,38 @@
-const gradientBox = document.querySelector(".gradient-box");
-const selectMenu = document.querySelector(".select-box select");
-const colorInputs = document.querySelectorAll(".colors input");
-const textarea = document.querySelector("textarea");
-const refreshBtn = document.querySelector(".refresh");
-const copyBtn = document.querySelector(".copy");
+document.addEventListener('DOMContentLoaded', () => {
+  const paletteLinks = document.querySelectorAll('.saved-palettes ul li a');
+  const palettes = [];
+  paletteLinks.forEach(link => {
+    if (link) {
+      const idMatch = link.textContent.match(/#(\d+)/);
+      const paletteId = idMatch ? parseInt(idMatch[1], 10) : null;
+      const paletteUrl = link.href;
+      palettes.push({
+        id: paletteId,
+        url: paletteUrl
+      });
+    }
+  });
 
-const getRandomColor = () => {
-  // Generating a random color in hexadecimal format. Example: #5665E9
-  const randomHex = Math.ceil(Math.random() * 0xffffff).toString(16);
-  return `#${randomHex}`;
-}
+  console.log(palettes);
 
-const generateGradient = (isRandom) => {
-  if (isRandom) { // If isRandom is true, update the colors inputs value with random color
-    colorInputs[0].value = getRandomColor();
-    colorInputs[1].value = getRandomColor();
-    colorInputs[2].value = getRandomColor();
-      colorInputs[3].value = getRandomColor();
-      colorInputs[4].value = getRandomColor();
-      colorInputs[5].value = getRandomColor();
-  }
-  // Creating a gradient string using the select menu value with color input values
-  const gradient = `linear-gradient(${selectMenu.value}, ${colorInputs[0].value}, ${colorInputs[1].value}, ${colorInputs[2].value}, ${colorInputs[3].value}, ${colorInputs[4].value}, ${colorInputs[5].value})`;
-  gradientBox.style.background = gradient;
-  textarea.value = `background: ${gradient};`;
-}
-
-const copyCode = () => {
-  // Copying textarea value and updating the copy button text
-  navigator.clipboard.writeText(textarea.value);
-  copyBtn.innerText = "Code Copied";
-  setTimeout(() => copyBtn.innerText = "Copy Code", 1600);
-}
-
-colorInputs.forEach(input => {
-  // Calling generateGradient function on each color input clicks
-  input.addEventListener("input", () => generateGradient(false));
 });
 
-selectMenu.addEventListener("change", () => generateGradient(false));
-refreshBtn.addEventListener("click", () => generateGradient(true));
-copyBtn.addEventListener("click", copyCode);
+document.addEventListener('DOMContentLoaded', () => {
+    const copyButton = document.getElementById('copy-button');
+    const cssCodeArea = document.getElementById('css-code-area');
+    copyButton.addEventListener('click', () => {xtarea
+      cssCodeArea.select();
+      cssCodeArea.setSelectionRange(0, 99999);
+      navigator.clipboard.writeText(cssCodeArea.value)
+        .then(() => {
+          copyButton.textContent = 'Copied!';
+          setTimeout(() => {
+            copyButton.textContent = 'Copy Code';
+          }, 2000);
+        })
+        .catch(err => {
+          console.error('Failed to copy text: ', err);
+          document.execCommand('copy');
+        });
+    });
+  });

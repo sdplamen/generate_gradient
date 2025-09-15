@@ -3,9 +3,8 @@ body {
     font-family: 'Montserrat', sans-serif;
     background-color: #205067;
     display: flex;
-    /*justify-content: center;*/
-    align-items: flex-start;
-    /*min-height: 100vh;*/
+    justify-content: center;
+    /*align-items: flex-start;*/
     margin: 0;
     padding: 20px;
     color: #ffffcc;
@@ -16,26 +15,21 @@ body {
     display: flex;
     gap: 50px;
     padding: 50px;
-    /*max-width: 1200px;*/
+    max-width: 1200px;
     margin: 0 auto;
 }
 
 .gradient-box {
-    width: 1000%;
+    width: 1200px;
     height: 500px;
     border: 1px solid #000;
 }
 
 .controls {
-    width: 1000%;
+    width: 1000px;
     display: flex;
     flex-direction: column;
     gap: 1px;
-}
-
-select {
-    background-color: #205067;
-    color: #ffffcc;
 }
 
 button {
@@ -49,13 +43,14 @@ label {
     margin-right: 10px;
 }
 
-.saved-palettes a {
+.saved-palettes ul li a{
+    width: 800px;
     color: #ffffcc;
     text-decoration: none;
 }
 
-.css-code-container {
-    margin-top: 20px;
+.css-code-container textarea {
+    width: 70%;
 }
 
 .css-code {
