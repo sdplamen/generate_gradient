@@ -2,31 +2,32 @@
 body {
     font-family: 'Montserrat', sans-serif;
     background-color: #205067;
-    display: flex;
-    justify-content: center;
-    /*align-items: flex-start;*/
     margin: 0;
     padding: 20px;
     color: #ffffcc;
     box-sizing: border-box;
 }
-
-.container {
+header {
     display: flex;
-    gap: 50px;
-    padding: 50px;
-    max-width: 1200px;
+    justify-content: center;
+}
+
+section {
+    display: flex;
+    justify-content: center;
+    gap: 80px;
+    width: 1000px;
     margin: 0 auto;
 }
 
 .gradient-box {
-    width: 1200px;
+    width: 800px;
     height: 500px;
     border: 1px solid #000;
 }
 
 .controls {
-    width: 1000px;
+    width: 400px;
     display: flex;
     flex-direction: column;
     gap: 1px;
@@ -43,12 +44,20 @@ label {
     margin-right: 10px;
 }
 
+.saved-palettes {
+    width: 400px;
+}
 .saved-palettes ul li a{
-    width: 800px;
     color: #ffffcc;
     text-decoration: none;
 }
 
+.pagination a {
+    display: flex;
+    justify-content: flex-start;
+    text-decoration: none;
+    color: #ffffcc;
+}
 .css-code-container textarea {
     width: 70%;
 }

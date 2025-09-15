@@ -7,8 +7,10 @@
     <link rel="stylesheet" href="{% static 'style.css' %}">
 </head>
 <body>
-<h1>Gradient Generator</h1>
-<div class="container">
+<header class="header-content">
+    <h1>Gradient Generator</h1>
+</header>
+<section class="container">
     <div class="gradient-box" style="{{ css_code }}"></div>
     <div class="controls">
         <form method="GET" action="{% url 'generate_gradient' %}">
@@ -60,8 +62,16 @@
                 {% endfor %}
             </ul>
         </details>
+        <div class="pagination">
+            {% if saved_palettes.has_previous %}
+                <a href="?page={{ saved_palettes.previous_page_number }}">Previous</a>
+            {% endif %}
+            {% if saved_palettes.has_next %}
+                <a href="?page={{ saved_palettes.next_page_number }}">Next</a>
+            {% endif %}
+        </div>
     </div>
-</div>
-<script href="{% static 'script.js' %}"></script>
+</section>
+<script src="{% static 'script.js' %}"></script>
 </body>
 </html>

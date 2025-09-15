@@ -1,3 +1,4 @@
+from django.core.paginator import Paginator
 from django.shortcuts import render, redirect, get_object_or_404
 from generate.forms import GradientForm, get_gradient_colors
 from rest_framework.views import APIView
@@ -18,18 +19,18 @@ def generate_gradient(request):
                 f'color{i + 1}': colors[i] for i in range(6)
             })
         else: 
-            form = GradientForm(request.GET)
-            if form.is_valid(): 
+            form = GradientForm(request.GET or None)
+            if form.is_valid():
                 colors = [form.cleaned_data[f'color{i + 1}'] for i in range(6)]
-            else: 
+            else:
                 colors = get_gradient_colors()
                 form = GradientForm(initial={
                     f'color{i + 1}': colors[i] for i in range(6)
                 })
 
-    elif request.method == 'POST': 
+    elif request.method == 'POST':
         form = GradientForm(request.POST)
-        if form.is_valid(): 
+        if form.is_valid():
             colors = [form.cleaned_data[f'color{i + 1}'] for i in range(6)]
             ColorPalette.objects.create(colors=colors)
             return redirect(f'/gradient/?{request.POST.urlencode()}')
@@ -37,30 +38,36 @@ def generate_gradient(request):
     gradient = f'linear-gradient(to top, {", ".join(colors)})'
     css_code = f'background: {gradient};'
 
+    saved_palettes = ColorPalette.objects.all().order_by('created_at')
+    paginator = Paginator(saved_palettes, 10)
+    page_number = request.GET.get('page')
+    page_obj = paginator.get_page(page_number)
+
     context = {
         'form': form,
         'gradient': gradient,
         'css_code': css_code,
         'colors': colors,
+        'saved_palettes': page_obj,
     }
     return render(request, 'index.html', context)
 
 def get_palette(request, palette_id):
     palette = get_object_or_404(ColorPalette, id=palette_id)
     colors = palette.colors
-
     form = GradientForm(initial={f'color{i + 1}': colors[i] for i in range(len(colors))})
-
-    saved_palettes = ColorPalette.objects.all().order_by('-created_at')
+    saved_palettes = ColorPalette.objects.all().order_by('created_at')
+    paginator = Paginator(saved_palettes, 10)
+    page_number = request.GET.get('page')
+    page_obj = paginator.get_page(page_number)
     gradient = f'linear-gradient(to top, {", ".join(colors)})'
     css_code = f'background: {gradient};'
 
     context = {
         'form': form,
-        'gradient': gradient,
         'css_code': css_code,
         'colors': colors,
-        'saved_palettes': saved_palettes,
+        'saved_palettes': page_obj,
     }
     return render(request, 'index.html', context)
 
