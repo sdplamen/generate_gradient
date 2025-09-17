@@ -6,7 +6,7 @@ body {
     padding: 20px;
     color: #ffffcc;
     box-sizing: border-box;
-    overflow: auto;
+    overflow: hidden;
 }
 header {
     display: flex;
