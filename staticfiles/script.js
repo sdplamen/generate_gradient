@@ -22,5 +22,3 @@ document.getElementById('copy-button').addEventListener('click', () => {
     document.execCommand('copy');
     // alert('CSS code copied to clipboard!');
 });
-
-document.getElementById('css-code-area').value = gradient;
