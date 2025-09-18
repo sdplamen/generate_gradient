@@ -36,8 +36,8 @@ section {
 
 button {
     background-color: #205067;
-    margin: 5px;
-    border-radius: 5px;
+    margin: 2px;
+    border-radius: 8px;
     color: #ffffcc;
 }
 
@@ -47,10 +47,10 @@ label {
 
 .color-swatch {
     position: relative;
-    width: 60px;
+    width: 80px;
     height: 20px;
     margin: 8px;
-    padding: 5px 5px 0 5px;
+    padding: 5px 5px 0 20px;
     border: 1px solid #205067;
     border-radius: 4px;
     box-shadow: 0 1px 2px rgba(0,0,0,0.1);

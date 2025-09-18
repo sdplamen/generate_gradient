@@ -18,7 +18,7 @@
             {% for field in form %}
                 {% if field.name != 'random' %}
                     {{ field.label_tag }}
-<!--                            {{ field }}-->
+                            {{ field }}
                         <div class="color-swatch" style="background-color: {{ field.value }};" data-for="{{ field.id }}">
                             <span class="color-value-text">{{ field.value }}</span>
                         </div>
