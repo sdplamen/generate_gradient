@@ -6,7 +6,7 @@ body {
     padding: 20px;
     color: #ffffcc;
     box-sizing: border-box;
-    overflow: hidden;
+    overflow: scroll;
 }
 header {
     display: flex;
@@ -60,7 +60,7 @@ label {
     color: #ffffcc;
 }
 .css-code-container textarea {
-    width: 70%;
+    width: 90%;
 }
 
 .css-code {

@@ -84,7 +84,7 @@ def generate_gradient(request):
     css_code = f'background: {gradient};'
 
     saved_palettes = ColorPalette.objects.all().order_by('created_at')
-    paginator = Paginator(saved_palettes, 10)
+    paginator = Paginator(saved_palettes, 20)
     page_number = request.GET.get('page')
     page_obj = paginator.get_page(page_number)
 
@@ -102,7 +102,7 @@ def get_palette(request, palette_id):
     colors = palette.colors
     form = GradientForm(initial={f'color{i + 1}': colors[i] for i in range(len(colors))})
     saved_palettes = ColorPalette.objects.all().order_by('created_at')
-    paginator = Paginator(saved_palettes, 10)
+    paginator = Paginator(saved_palettes, 20)
     page_number = request.GET.get('page')
     page_obj = paginator.get_page(page_number)
     gradient = f'linear-gradient(to top, {", ".join(colors)})'
@@ -132,7 +132,7 @@ class GradientAPIView(APIView):
         css_code = f'background: {gradient};'
 
         saved_palettes = ColorPalette.objects.all().order_by('created_at')
-        paginator = Paginator(saved_palettes, 10)
+        paginator = Paginator(saved_palettes, 20)
         page_number = request.query_params.get('page')
         page_obj = paginator.get_page(page_number)
 
@@ -176,7 +176,7 @@ class PaletteAPIView(APIView):
         css_code = f'background: {gradient};'
 
         saved_palettes = ColorPalette.objects.all().order_by('created_at')
-        paginator = Paginator(saved_palettes, 10)
+        paginator = Paginator(saved_palettes, 20)
         page_number = request.query_params.get('page')
         page_obj = paginator.get_page(page_number)
 

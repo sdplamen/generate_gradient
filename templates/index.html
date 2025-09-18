@@ -48,8 +48,8 @@
         </div>
     </div>
     <div class="saved-palettes">
-        <details>
-            <summary><h2>Saved Palettes</h2></summary>
+        <article>
+            <h2>Saved Palettes</h2>
             <ul type="none">
                 {% for palette in saved_palettes %}
                 <li>
@@ -61,7 +61,7 @@
                 <li>No palettes saved yet.</li>
                 {% endfor %}
             </ul>
-        </details>
+        </article>
         <div class="pagination">
             {% if saved_palettes.has_previous %}
                 <a href="?page={{ saved_palettes.previous_page_number }}">Previous</a>
