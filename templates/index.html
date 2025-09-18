@@ -14,16 +14,17 @@
     <div class="gradient-box" style="{{ css_code }}"></div>
     <div class="controls">
         <form method="GET" action="{% url 'generate_gradient' %}">
-            <input type="hidden" name="random" value="false">
+<!--            <input type="hidden" name="random" value="false">-->
             {% for field in form %}
                 {% if field.name != 'random' %}
-                    <p>
-                        {{ field.label_tag }}
-                        {{ field }}
-                        {% if field.help_text %}
-                            <span class="helptext">{{ field.help_text }}</span>
-                        {% endif %}
-                    </p>
+                    {{ field.label_tag }}
+<!--                            {{ field }}-->
+                        <div class="color-swatch" style="background-color: {{ field.value }};" data-for="{{ field.id }}">
+                            <span class="color-value-text">{{ field.value }}</span>
+                        </div>
+                    {% if field.help_text %}
+                        <span class="helptext">{{ field.help_text }}</span>
+                    {% endif %}
                 {% endif %}
             {% endfor %}
             <button type="submit">Update Gradient</button>
@@ -42,9 +43,9 @@
         </form>
 
         <div class="css-code-container">
-            <span>CSS Code:</span>
+<!--            <span>CSS Code:</span>-->
             <button id="copy-button">Copy Code</button>
-            <textarea id="css-code-area" class="css-code" readonly>{{ css_code }}</textarea>
+<!--            <textarea id="css-code-area" class="css-code" readonly>{{ css_code }}</textarea>-->
         </div>
     </div>
     <div class="saved-palettes">
