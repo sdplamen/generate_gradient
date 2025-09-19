@@ -130,7 +130,7 @@ class PaletteUpdateView(UpdateView):
     template_name = 'edit-palette.html'
     success_url = reverse_lazy('generate_gradient')
 
-    def get_initial(self) :
+    def get_initial(self):
         initial = super().get_initial()
         palette = self.get_object()
         color_data = palette.colors

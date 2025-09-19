@@ -6,7 +6,8 @@ class ColorPalette(models.Model):
     created_at = models.DateTimeField(auto_now_add=True)
 
     def __str__(self):
-        return f"Palette from {self.created_at.strftime('%Y-%m-%d %H:%M')}"
+        # return f"Palette from {self.created_at.strftime('%Y-%m-%d %H:%M')}"
+        return f"Palette {self.colors}"
 
     @property
     def name(self):

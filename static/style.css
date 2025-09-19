@@ -15,14 +15,13 @@ body {
     overflow: scroll;
 }
 header {
-    display: flex;
-    justify-content: center;
+    text-align: center;
 }
 
-section {
+.container {
     display: flex;
     justify-content: center;
-    gap: 60px;
+    gap: 20px;
     width: 1000px;
     margin: 0 auto;
 }
@@ -30,7 +29,7 @@ section {
 .gradient-box {
     width: 800px;
     height: 500px;
-    border: 1px solid #000;
+    border: 0.5px solid antiquewhite;
     position: relative;
 }
 
@@ -42,43 +41,43 @@ section {
 
 button {
     background-color: #205067;
-    width: 200px;
+    width: 80px;
     height: 80px;
     border-radius: 8px;
     color: #ffffcc;
 }
 
-.button:hover {
-    background-color: #68a2ef;
+button:hover {
+    background-color: #1f6acd;
     cursor: pointer;
     color: #fff;
 }
 .random {
     position: absolute;
-    top: 85%;
+    top: 80%;
     left: 15%;
 }
 
 .update {
     position: absolute;
-    top: 85%;
+    top: 80%;
     left: 35%;
 }
 
 #copy {
     position: absolute;
-    top: 85%;
+    top: 80%;
     left: 55%;
 }
 
 .save {
     position: absolute;
-    top: 85%;
+    top: 80%;
     left: 75%;
 }
 .edit button {
-    width: 100%;
-    height: 100%;
+    width: 10%;
+    height: 10%;
 }
 
 .edit a {
@@ -114,7 +113,7 @@ button {
 }
 
 .saved-palettes {
-    width: 400px;
+    width: 350px;
 }
 .saved-palettes ul li a{
     color: #ffffcc;

@@ -55,7 +55,7 @@
                 {% for palette in saved_palettes %}
                 <li>
                     <a href="{% url 'get_palette' palette_id=palette.id %}">
-                        Palette #{{ palette.id }}
+                        Palette {{ palette.id }}
                     </a>
                     <a href="{% url 'edit-palette' palette.id %}">Edit</a>
                     <a href="{% url 'delete-palette' palette.id %}">Delete</a>

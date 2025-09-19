@@ -10,7 +10,7 @@
 <body>
     <div>
         <h1>Are you sure?</h1>
-        <p>You are about to delete the palette: <span>{{ palette }}</span>. This action cannot be undone.</p>
+        <p>You are about to delete the {{ palette.id }} {{ object }}. This action cannot be undone.</p>
 
         <div class="delete">
             <button><a href="{% url 'generate_gradient' %}">Cancel</a></button>
