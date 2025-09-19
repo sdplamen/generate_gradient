@@ -5,13 +5,13 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Edit Palette</title>
-    <link rel="stylesheet" href="{% static 'palette-style.css' %}">
+    <link rel="stylesheet" href="{% static 'style.css' %}">
 </head>
 <body>
     <div>
         <header>
             <h1>Edit Palette</h1>
-            <p>Update the color scheme for <span>{{ palette.name }}</span>.</p>
+            <p>Update the color scheme for <span>{{ palette }}</span>.</p>
         </header>
 
         <section>
@@ -27,10 +27,10 @@
                     </ul>
                 </div>
             {% endif %}
-            <form action="{% url 'edit-palette' palette.pk %}" method="post">
+            <form action="{% url 'edit-palette' object.pk %}" method="post">
                 {% csrf_token %}
                 {% for field in form %}
-                    <div class="space-y-1">
+                    <div>
                         <label for="{{ field.id_for_label }}">
                             {{ field.label }}
                         </label>
@@ -40,13 +40,9 @@
                         {% endif %}
                     </div>
                 {% endfor %}
-                <div>
-                    <a href="{% url 'palette-list' %}">
-                        Cancel
-                    </a>
-                    <button type="submit">
-                        Update
-                    </button>
+                <div class="edit">
+                    <button><a href="{% url 'generate_gradient' %}">Cancel</a></button>
+                    <button class="edit">Update</button>
                 </div>
             </form>
         </section>

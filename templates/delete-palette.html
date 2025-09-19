@@ -5,24 +5,18 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Confirm Deletion</title>
-    <link rel="stylesheet" href="{% static 'palette-style.css' %}">
+    <link rel="stylesheet" href="{% static 'style.css' %}">
 </head>
 <body>
     <div>
         <h1>Are you sure?</h1>
-        <p>
-            You are about to delete the palette: <span>{{ palette.name }}</span>. This action cannot be undone.
-        </p>
+        <p>You are about to delete the palette: <span>{{ palette }}</span>. This action cannot be undone.</p>
 
-        <div>
-            <a href="{% url 'palette-list' %}">
-                Cancel
-            </a>
-            <form action="{% url 'delete-palette' palette.pk %}" method="post">
+        <div class="delete">
+            <button><a href="{% url 'generate_gradient' %}">Cancel</a></button>
+            <form action=" {% url 'delete-palette' object.pk %} " method="post">
                 {% csrf_token %}
-                <button type="submit">
-                    Confirm Deletion
-                </button>
+                <button>Confirm Deletion</button>
             </form>
         </div>
     </div>

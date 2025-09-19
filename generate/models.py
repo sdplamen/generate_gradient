@@ -7,3 +7,7 @@ class ColorPalette(models.Model):
 
     def __str__(self):
         return f"Palette from {self.created_at.strftime('%Y-%m-%d %H:%M')}"
+
+    @property
+    def name(self):
+        return self.__str__()

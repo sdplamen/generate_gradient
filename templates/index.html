@@ -27,11 +27,11 @@
                     {% endif %}
                 {% endif %}
             {% endfor %}
-            <button type="submit">Update Gradient</button>
+            <button class="update">Update Gradient</button>
         </form>
 
         <form method="GET" action="{% url 'generate_gradient' %}">
-            <button type="submit" name="random" value="true">Random Colors</button>
+            <button class="random" name="random" value="true">Random Colors</button>
         </form>
 
         <form method="POST" action="{% url 'generate_gradient' %}" class="save-form">
@@ -39,13 +39,13 @@
             {% for color in colors %}
                 <input type="hidden" name="color{{ forloop.counter }}" value="{{ color }}">
             {% endfor %}
-            <button type="submit">Save Palette</button>
+            <button class="save">Save Palette</button>
         </form>
 
         <div class="css-code-container">
 <!--            <span>CSS Code:</span>-->
-            <button id="copy-button">Copy Code</button>
-<!--            <textarea id="css-code-area" class="css-code" readonly>{{ css_code }}</textarea>-->
+            <button id="copy">Copy Code</button>
+            <textarea id="css-code-area" class="css-code" readonly>{{ css_code }}</textarea>
         </div>
     </div>
     <div class="saved-palettes">
@@ -57,6 +57,8 @@
                     <a href="{% url 'get_palette' palette_id=palette.id %}">
                         Palette #{{ palette.id }}
                     </a>
+                    <a href="{% url 'edit-palette' palette.id %}">Edit</a>
+                    <a href="{% url 'delete-palette' palette.id %}">Delete</a>
                 </li>
                 {% empty %}
                 <li>No palettes saved yet.</li>

@@ -16,9 +16,11 @@ document.addEventListener('DOMContentLoaded', () => {
     console.log(palettes);
 });
 
-document.getElementById('copy-button').addEventListener('click', () => {
+document.getElementById('copy').addEventListener('click', () => {
     const cssCode = document.getElementById('css-code-area');
+    cssCode.style.display = 'block';
     cssCode.select();
     document.execCommand('copy');
+    cssCode.style.display = 'none';
     // alert('CSS code copied to clipboard!');
 });

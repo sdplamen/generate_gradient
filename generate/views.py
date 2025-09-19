@@ -1,5 +1,8 @@
 from django.core.paginator import Paginator
 from django.shortcuts import render, redirect, get_object_or_404
+from django.urls import reverse_lazy
+from django.views.generic import UpdateView, DeleteView
+
 from generate.forms import GradientForm, get_gradient_colors
 from rest_framework.views import APIView
 from rest_framework.response import Response
@@ -115,6 +118,43 @@ def get_palette(request, palette_id):
         'saved_palettes': page_obj,
     }
     return render(request, 'index.html', context)
+
+class PaletteDeleteView(DeleteView):
+    model = ColorPalette
+    template_name = 'delete-palette.html'
+    success_url = reverse_lazy('generate_gradient')
+
+class PaletteUpdateView(UpdateView):
+    model = ColorPalette
+    form_class = GradientForm
+    template_name = 'edit-palette.html'
+    success_url = reverse_lazy('generate_gradient')
+
+    def get_initial(self) :
+        initial = super().get_initial()
+        palette = self.get_object()
+        color_data = palette.colors
+        for i, color_value in enumerate(color_data, 1):
+            field_name = f'color{i}'
+            if field_name in self.form_class.base_fields:
+                initial[field_name] = color_value
+
+        return initial
+
+    def get_form_kwargs(self):
+        kwargs = super().get_form_kwargs()
+        kwargs.pop('instance', None)
+        return kwargs
+
+    def form_valid(self, form):
+        palette = self.get_object()
+        updated_colors = []
+        for field_name in form.fields:
+            if field_name.startswith('color'):
+                updated_colors.append(form.cleaned_data[field_name])
+        palette.colors = updated_colors
+        palette.save()
+        return redirect(self.get_success_url())
 
 class GradientAPIView(APIView):
     def get(self, request):
