@@ -27,49 +27,51 @@
                     {% endif %}
                 {% endif %}
             {% endfor %}
+            <button type="submit">Update Gradient</button>
         </form>
-    </div>
-    <div  class="saved-palettes">
-            <article>
-                <h2>Saved Palettes</h2>
-                <ul type="none">
-                    {% for palette in saved_palettes %}
-                    <li>
-                        <a href="{% url 'get_palette' palette_id=palette.id %}">
-                            Palette #{{ palette.id }}
-                        </a>
-                    </li>
-                    {% empty %}
-                    <li>No palettes saved yet.</li>
-                    {% endfor %}
-                </ul>
-            </article>
-            <div class="pagination">
-                {% if saved_palettes.has_previous %}
-                    <a href="?page={{ saved_palettes.previous_page_number }}">Previous</a>
-                {% endif %}
-                {% if saved_palettes.has_next %}
-                    <a href="?page={{ saved_palettes.next_page_number }}">Next</a>
-                {% endif %}
-            </div>
-        </div>
-<section class="buttons">
-    <form method="GET" action="{% url 'generate_gradient' %}">
-        <button type="submit" name="random" value="true">Random Colors</button>
-    </form>
-    <button type="submit">Update Gradient</button>
-    <div class="css-code-container">
+
+        <form method="GET" action="{% url 'generate_gradient' %}">
+            <button type="submit" name="random" value="true">Random Colors</button>
+        </form>
+
+        <form method="POST" action="{% url 'generate_gradient' %}" class="save-form">
+            {% csrf_token %}
+            {% for color in colors %}
+                <input type="hidden" name="color{{ forloop.counter }}" value="{{ color }}">
+            {% endfor %}
+            <button type="submit">Save Palette</button>
+        </form>
+
+        <div class="css-code-container">
 <!--            <span>CSS Code:</span>-->
-        <button id="copy-button">Copy Code</button>
+            <button id="copy-button">Copy Code</button>
 <!--            <textarea id="css-code-area" class="css-code" readonly>{{ css_code }}</textarea>-->
+        </div>
     </div>
-    <form method="POST" action="{% url 'generate_gradient' %}" class="save-form">
-        {% csrf_token %}
-        {% for color in colors %}
-            <input type="hidden" name="color{{ forloop.counter }}" value="{{ color }}">
-        {% endfor %}
-        <button type="submit">Save Palette</button>
-    </form>
+    <div class="saved-palettes">
+        <article>
+            <h2>Saved Palettes</h2>
+            <ul type="none">
+                {% for palette in saved_palettes %}
+                <li>
+                    <a href="{% url 'get_palette' palette_id=palette.id %}">
+                        Palette #{{ palette.id }}
+                    </a>
+                </li>
+                {% empty %}
+                <li>No palettes saved yet.</li>
+                {% endfor %}
+            </ul>
+        </article>
+        <div class="pagination">
+            {% if saved_palettes.has_previous %}
+                <a href="?page={{ saved_palettes.previous_page_number }}">Previous</a>
+            {% endif %}
+            {% if saved_palettes.has_next %}
+                <a href="?page={{ saved_palettes.next_page_number }}">Next</a>
+            {% endif %}
+        </div>
+    </div>
 </section>
 <script src="{% static 'script.js' %}"></script>
 </body>
