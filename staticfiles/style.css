@@ -15,12 +15,17 @@ body {
     overflow: scroll;
 }
 header {
-    text-align: center;
+    display: flex;
+    justify-content: center;
+    position: relative;
+    top: 700px;
+
 }
 
 .container {
     display: flex;
-    justify-content: center;
+    flex-wrap: wrap;
+    justify-content: space-around;
     gap: 20px;
     width: 1000px;
     margin: 0 auto;
@@ -34,7 +39,7 @@ header {
 }
 
 .controls {
-    width: 400px;
+    width: 200px;
     display: flex;
     flex-direction: column;
 }
@@ -54,25 +59,25 @@ button:hover {
 }
 .random {
     position: absolute;
-    top: 80%;
+    top: 2%;
     left: 15%;
 }
 
 .update {
     position: absolute;
-    top: 80%;
+    top: 2%;
     left: 35%;
 }
 
 #copy {
     position: absolute;
-    top: 80%;
+    top: 2%;
     left: 55%;
 }
 
 .save {
     position: absolute;
-    top: 80%;
+    top: 2%;
     left: 75%;
 }
 .edit button {
@@ -113,7 +118,7 @@ button:hover {
 }
 
 .saved-palettes {
-    width: 350px;
+    width: 200px;
 }
 .saved-palettes ul li a{
     color: #ffffcc;

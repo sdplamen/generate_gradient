@@ -2,7 +2,7 @@ import random
 from django import forms
 
 
-def get_gradient_colors(num_colors=6, max_step=50) :
+def get_gradient_colors(num_colors=6, max_step=50):
     def clamp(value) :
         return max(0, min(255, value))
 
@@ -15,7 +15,7 @@ def get_gradient_colors(num_colors=6, max_step=50) :
 
     colors = [rgb_to_hex(r, g, b)]
 
-    for _ in range(num_colors - 1) :
+    for _ in range(num_colors - 1):
         r = clamp(r + random.randint(-max_step, max_step))
         g = clamp(g + random.randint(-max_step, max_step))
         b = clamp(b + random.randint(-max_step, max_step))

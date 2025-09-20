@@ -72,9 +72,7 @@ def generate_gradient(request):
                 colors = [form.cleaned_data[f'color{i + 1}'] for i in range(6)]
             else:
                 colors = get_gradient_colors()
-                form = GradientForm(initial={
-                    f'color{i + 1}': colors[i] for i in range(6)
-                })
+                form = GradientForm(initial={f'color{i + 1}': colors[i] for i in range(6)})
 
     elif request.method == 'POST':
         form = GradientForm(request.POST)
