@@ -1,8 +1,9 @@
+import random
+
 from django.core.paginator import Paginator
 from django.shortcuts import render, redirect, get_object_or_404
 from django.urls import reverse_lazy
 from django.views.generic import UpdateView, DeleteView
-
 from generate.forms import GradientForm, get_gradient_colors
 from rest_framework.views import APIView
 from rest_framework.response import Response
@@ -59,7 +60,7 @@ from generate.serializers import GradientSerializer
 
 def generate_gradient(request):
     colors = []
-
+    active_palette_id = None
     if request.method == 'GET':
         if 'random' in request.GET and request.GET['random'] == 'true':
             colors = get_gradient_colors()
@@ -95,6 +96,7 @@ def generate_gradient(request):
         'css_code': css_code,
         'colors': colors,
         'saved_palettes': page_obj,
+        'active_palette_id' :active_palette_id,
     }
     return render(request, 'index.html', context)
 
@@ -114,8 +116,17 @@ def get_palette(request, palette_id):
         'css_code': css_code,
         'colors': colors,
         'saved_palettes': page_obj,
+        'active_palette_id': palette_id,
     }
     return render(request, 'index.html', context)
+
+def get_saved_palette(request):
+    try:
+        all_palette_ids = ColorPalette.objects.values_list('id', flat=True)
+        random_id = random.choice(all_palette_ids)
+        return redirect('get_palette', palette_id=random_id)
+    except IndexError:
+        return redirect('generate_gradient')
 
 class PaletteDeleteView(DeleteView):
     model = ColorPalette

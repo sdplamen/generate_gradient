@@ -5,6 +5,7 @@ from generate import views
 urlpatterns = [
     path('', views.generate_gradient, name='generate_gradient'),
     path('gradient/', views.generate_gradient, name='generate_gradient'),
+    path('gradient/palette/', views.get_saved_palette, name='get_saved_palette'),
     path('gradient/<int:palette_id>/', views.get_palette, name='get_palette'),
     path('gradient/<int:pk>/edit/', views.PaletteUpdateView.as_view(), name='edit-palette'),
     path('gradient/<int:pk>/delete/', views.PaletteDeleteView.as_view(), name='delete-palette'),

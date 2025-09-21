@@ -60,26 +60,33 @@ button:hover {
 .random {
     position: absolute;
     top: 2%;
-    left: 15%;
+    left: 5%;
+}
+
+.saved {
+    position: absolute;
+    top: 2%;
+    left: 25%;
 }
 
 .update {
     position: absolute;
     top: 2%;
-    left: 35%;
+    left: 45%;
 }
 
 #copy {
     position: absolute;
     top: 2%;
-    left: 55%;
+    left: 65%;
 }
 
 .save {
     position: absolute;
     top: 2%;
-    left: 75%;
+    left: 85%;
 }
+
 .edit button {
     width: 10%;
     height: 10%;
@@ -117,8 +124,10 @@ button:hover {
     color: #333;
 }
 
-.saved-palettes {
-    width: 200px;
+.saved-palettes li.active-palette {
+    background-color: #1f6acd;
+    font-weight: bold;
+    padding-left: 15px;
 }
 .saved-palettes ul li a{
     color: #ffffcc;

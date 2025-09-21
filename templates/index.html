@@ -34,6 +34,10 @@
             <button class="random" name="random" value="true">Random Colors</button>
         </form>
 
+        <form method="GET" action="{% url 'get_saved_palette' %}">
+            <button class="saved">Saved Palette</button>
+        </form>
+
         <form method="POST" action="{% url 'generate_gradient' %}" class="save-form">
             {% csrf_token %}
             {% for color in colors %}
@@ -53,7 +57,7 @@
             <h2>Saved Palettes</h2>
             <ul type="none">
                 {% for palette in saved_palettes %}
-                <li>
+                <li {% if palette.id == active_palette_id %}class="active-palette"{% endif %}>
                     <a href="{% url 'get_palette' palette_id=palette.id %}">
                         Palette {{ palette.id }}
                     </a>
@@ -64,6 +68,7 @@
                 <li>No palettes saved yet.</li>
                 {% endfor %}
             </ul>
+        </article>
         </article>
         <div class="pagination">
             {% if saved_palettes.has_previous %}
