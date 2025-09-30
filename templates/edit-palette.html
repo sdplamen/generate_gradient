@@ -1,51 +1,43 @@
-<!DOCTYPE html>
+{% extends "base.html" %}
 {% load static %}
-<html lang="en">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Edit Palette</title>
-    <link rel="stylesheet" href="{% static 'style.css' %}">
-</head>
-<body>
-    <div>
-        <header>
-            <h1>Edit Palette</h1>
-            <p>Update the color scheme for <span>{{ object }}</span>.</p>
-        </header>
+{% block content %}
+<div>
+    <header>
+        <h2>Edit Palette</h2>
+        <p>Update the color scheme for <span>{{ object }}</span>.</p>
+    </header>
 
-        <section>
-            {% if errors %}
-                <div>
-                    <p>Please correct the following errors:</p>
-                    <ul>
-                        {% for field, error_list in errors.items %}
-                            {% for error in error_list %}
-                                <li>{{ field }}: {{ error }}</li>
-                            {% endfor %}
+    <section>
+        {% if errors %}
+            <div>
+                <p>Please correct the following errors:</p>
+                <ul>
+                    {% for field, error_list in errors.items %}
+                        {% for error in error_list %}
+                            <li>{{ field }}: {{ error }}</li>
                         {% endfor %}
-                    </ul>
+                    {% endfor %}
+                </ul>
+            </div>
+        {% endif %}
+        <form action="{% url 'edit-palette' object.pk %}" method="post">
+            {% csrf_token %}
+            {% for field in form %}
+                <div>
+                    <label for="{{ field.id_for_label }}">
+                        {{ field.label }}
+                    </label>
+                    {{ field }}
+                    {% if field.errors %}
+                        <p>{{ field.errors.as_text }}</p>
+                    {% endif %}
                 </div>
-            {% endif %}
-            <form action="{% url 'edit-palette' object.pk %}" method="post">
-                {% csrf_token %}
-                {% for field in form %}
-                    <div>
-                        <label for="{{ field.id_for_label }}">
-                            {{ field.label }}
-                        </label>
-                        {{ field }}
-                        {% if field.errors %}
-                            <p>{{ field.errors.as_text }}</p>
-                        {% endif %}
-                    </div>
-                {% endfor %}
-                <div class="edit">
-                    <button><a href="{% url 'generate_gradient' %}">Cancel</a></button>
-                    <button class="edit">Update</button>
-                </div>
-            </form>
-        </section>
-    </div>
-</body>
-</html>
+            {% endfor %}
+            <div class="edit">
+                <button><a href="{% url 'generate_gradient' %}">Cancel</a></button>
+                <button class="edit">Update</button>
+            </div>
+        </form>
+    </section>
+</div>
+{% endblock %}

@@ -1,24 +1,16 @@
-<!DOCTYPE html>
+{% extends "base.html" %}
 {% load static %}
-<html lang="en">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Confirm Deletion</title>
-    <link rel="stylesheet" href="{% static 'style.css' %}">
-</head>
-<body>
-    <div>
-        <h1>Are you sure?</h1>
-        <p>You are about to delete the {{ palette.id }} {{ object }}. This action cannot be undone.</p>
+{% block content %}
+<div>
+    <h2>Are you sure?</h2>
+    <p>You are about to delete the {{ palette.id }} {{ object }}. This action cannot be undone.</p>
 
-        <div class="delete">
-            <button><a href="{% url 'generate_gradient' %}">Cancel</a></button>
-            <form action=" {% url 'delete-palette' object.pk %} " method="post">
-                {% csrf_token %}
-                <button>Confirm Deletion</button>
-            </form>
-        </div>
+    <div class="delete">
+        <button><a href="{% url 'generate_gradient' %}">Cancel</a></button>
+        <form action=" {% url 'delete-palette' object.pk %} " method="post">
+            {% csrf_token %}
+            <button>Confirm Deletion</button>
+        </form>
     </div>
-</body>
-</html>
+</div>
+{% endblock %}
