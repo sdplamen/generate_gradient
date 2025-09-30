@@ -68,6 +68,10 @@ button:hover {
 }
 
 .site-title {
+    display: flex;
+    flex-direction: column;
+    justify-content: space-between;
+    align-items: center;
     color: antiquewhite;
     text-decoration: none;
 }
@@ -88,17 +92,7 @@ button:hover {
     display: inline-block;
 }
 
-.random {
-    background-color: #0f3763;
-    color: antiquewhite;
-}
-
-.saved {
-    background-color: #0f3763;
-    color: antiquewhite;
-}
-
-.save {
+.nav-form .random, .saved, .save {
     background-color: #0f3763;
     color: antiquewhite;
 }
@@ -112,12 +106,14 @@ button:hover {
 
 .auth-btn {
     background-color: #0f3763;
+    text-decoration: none;
     color: antiquewhite;
     margin-left: 10px;
 }
 
 .auth-btn.login {
     background-color: #0f3763;
+    text-decoration: none;
     color: antiquewhite;
     margin-left: 10px;
     margin-right: 10px;
@@ -128,6 +124,7 @@ button:hover {
 
 .auth-btn.logout {
     background-color: #0f3763;
+    text-decoration: none;
     color: antiquewhite;
     margin-left: 10px;
     margin-right: 10px;
@@ -138,6 +135,7 @@ button:hover {
 
 .auth-btn.register {
     background-color: #0f3763;
+    text-decoration: none;
     color: antiquewhite;
     margin-left: 10px;
     margin-right: 10px;
@@ -146,6 +144,11 @@ button:hover {
     padding: 10px;
 }
 
+.auth-link-text a {
+    font-weight: 600;
+    text-decoration: none;
+    color: #dcf151;
+}
 .edit button {
     width: 10%;
     height: 10%;
