@@ -1,0 +1,18 @@
+<!DOCTYPE html>
+{% load static %}
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    {% block title %}<title>Gradient Generator</title>{% endblock %}
+    <link rel="stylesheet" href="{% static 'style.css' %}">
+</head>
+<body>
+
+{% include 'nav-bar.html' %}
+
+{% block content %}
+{% endblock %}
+
+<script src="{% static 'script.js' %}"></script>
+</body>
+</html>

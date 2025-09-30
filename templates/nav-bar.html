@@ -1,0 +1,40 @@
+{% load static %}
+<header class="main-header">
+    <div class="header-left">
+        <h1><a href="{% url 'generate_gradient' %}" class="site-title">Gradient Generator</a></h1>
+    </div>
+
+    <div class="header-center">
+        <form method="GET" action="{% url 'generate_gradient' %}" class="nav-form">
+            <button class="random" name="random" value="true">Random Colors</button>
+        </form>
+
+        <form method="GET" action="{% url 'get_saved_palette' %}" class="nav-form">
+            <button class="saved">Random Saved Palette</button>
+        </form>
+
+        {% if user.is_authenticated %}
+            <form method="POST" action="{% url 'generate_gradient' %}" class="nav-form save-form-nav">
+                {% csrf_token %}
+                {% for color in colors %}
+                    <input type="hidden" name="color{{ forloop.counter }}" value="{{ color }}">
+                {% endfor %}
+                <button class="save">Save Palette</button>
+            </form>
+        {% else %}
+            <p class="login-prompt">Log in to save palettes.</p>
+        {% endif %}
+    </div>
+
+    <nav class="header-right">
+        {% if user.is_authenticated %}
+            <form method="POST" action="{% url 'logout' %}" style="display: inline;">
+                {% csrf_token %}
+                <button type="submit" class="auth-btn logout">Logout</button>
+            </form>
+        {% else %}
+            <a href="{% url 'login' %}" class="auth-btn login">Login</a>
+            <a href="{% url 'register' %}" class="auth-btn register">Register</a>
+        {% endif %}
+    </nav>
+</header>

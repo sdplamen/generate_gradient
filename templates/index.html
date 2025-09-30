@@ -7,14 +7,14 @@
     <link rel="stylesheet" href="{% static 'style.css' %}">
 </head>
 <body>
-<header>
-    <h1>Gradient Generator</h1>
-</header>
+
+{% include 'nav-bar.html' %}
+
 <section class="container">
     <div class="gradient-box" style="{{ css_code }}"></div>
     <div class="controls">
-        <form method="GET" action="{% url 'generate_gradient' %}">
-<!--            <input type="hidden" name="random" value="false">-->
+
+        <form method="GET" action="{% url 'generate_gradient' %}" class="color-input-form">
             {% for field in form %}
                 {% if field.name != 'random' %}
                     {{ field.label_tag }}
@@ -30,28 +30,12 @@
             <button class="update">Update Gradient</button>
         </form>
 
-        <form method="GET" action="{% url 'generate_gradient' %}">
-            <button class="random" name="random" value="true">Random Colors</button>
-        </form>
-
-        <form method="GET" action="{% url 'get_saved_palette' %}">
-            <button class="saved">Saved Palette</button>
-        </form>
-
-        <form method="POST" action="{% url 'generate_gradient' %}" class="save-form">
-            {% csrf_token %}
-            {% for color in colors %}
-                <input type="hidden" name="color{{ forloop.counter }}" value="{{ color }}">
-            {% endfor %}
-            <button class="save">Save Palette</button>
-        </form>
-
         <div class="css-code-container">
-<!--            <span>CSS Code:</span>-->
             <button id="copy">Copy Code</button>
             <textarea id="css-code-area" class="css-code" readonly>{{ css_code }}</textarea>
         </div>
     </div>
+
     <div class="saved-palettes">
         <article>
             <h2>Saved Palettes</h2>
@@ -61,14 +45,15 @@
                     <a href="{% url 'get_palette' palette_id=palette.id %}">
                         Palette {{ palette.id }}
                     </a>
-                    <a href="{% url 'edit-palette' palette.id %}">Edit</a>
-                    <a href="{% url 'delete-palette' palette.id %}">Delete</a>
+                    {% if user.is_authenticated and palette.user == user %}
+                        <a href="{% url 'edit-palette' palette.id %}">Edit</a>
+                        <a href="{% url 'delete-palette' palette.id %}">Delete</a>
+                    {% endif %}
                 </li>
                 {% empty %}
                 <li>No palettes saved yet.</li>
                 {% endfor %}
             </ul>
-        </article>
         </article>
         <div class="pagination">
             {% if saved_palettes.has_previous %}
