@@ -61,87 +61,52 @@ button:hover {
     display: flex;
     justify-content: space-between;
     align-items: center;
-    padding: 0 30px;
+    padding: 10px 30px;
     background-color: #001535;
     color: antiquewhite;
     box-shadow: 0 2px 5px rgba(0, 0, 0, 0.2);
 }
 
 .site-title {
-    display: flex;
-    flex-direction: column;
-    justify-content: space-between;
-    align-items: center;
+    display: block;
     color: antiquewhite;
     text-decoration: none;
 }
 
 .header-center {
     display: flex;
-    gap: 100px;
+    gap: 30px;
+    align-items: center;
+    justify-content: center;
+    flex-grow: 1;
 }
 
 .nav-form button, .auth-btn {
-    padding: 0 5px;
+    padding: 10px 15px;
     border: none;
     border-radius: 5px;
     cursor: pointer;
     font-weight: 500;
     text-decoration: none;
     text-align: center;
-    display: inline-block;
-}
-
-.nav-form .random, .saved, .save {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
     background-color: #0f3763;
     color: antiquewhite;
+    transition: background-color 0.2s;
+}
+
+.nav-form button:hover, .auth-btn:hover {
+    background-color: #1a4f8a;
 }
 
 .login-prompt {
     font-size: 0.9em;
     color: antiquewhite;
     margin: 0;
-    line-height: 35px;
-}
-
-.auth-btn {
-    background-color: #0f3763;
-    text-decoration: none;
-    color: antiquewhite;
-    margin-left: 10px;
-}
-
-.auth-btn.login {
-    background-color: #0f3763;
-    text-decoration: none;
-    color: antiquewhite;
-    margin-left: 10px;
-    margin-right: 10px;
-    cursor: pointer;
-    border: none;
-    padding: 10px;
-}
-
-.auth-btn.logout {
-    background-color: #0f3763;
-    text-decoration: none;
-    color: antiquewhite;
-    margin-left: 10px;
-    margin-right: 10px;
-    cursor: pointer;
-    border: none;
-    padding: 10px;
-}
-
-.auth-btn.register {
-    background-color: #0f3763;
-    text-decoration: none;
-    color: antiquewhite;
-    margin-left: 10px;
-    margin-right: 10px;
-    cursor: pointer;
-    border: none;
-    padding: 10px;
+    line-height: 1;
+    padding: 10px 0;
 }
 
 .auth-link-text a {
@@ -149,6 +114,7 @@ button:hover {
     text-decoration: none;
     color: #dcf151;
 }
+
 .edit button {
     width: 10%;
     height: 10%;
@@ -215,4 +181,65 @@ button:hover {
     font-family: monospace;
     resize: none;
     color: #ffffcc;
+}
+
+@media (max-width: 800px) {
+    .main-header {
+        padding: 10px 20px;
+    }
+
+    .header-center {
+        gap: 20px;
+    }
+    .nav-form button, .auth-btn {
+        padding: 8px 12px;
+        font-size: 0.9em;
+    }
+}
+
+@media (max-width: 600px) {
+    .main-header {
+        flex-direction: column;
+        align-items: flex-start;
+        gap: 10px;
+        padding: 15px 15px;
+    }
+
+    .header-left {
+        width: 100%;
+        text-align: center;
+        margin-bottom: 10px;
+    }
+
+    .header-center {
+        width: 100%;
+        flex-wrap: wrap;
+        justify-content: space-around;
+        gap: 10px;
+    }
+
+    .nav-form {
+        flex: 1 1 45%;
+        margin: 5px 0;
+    }
+
+    .nav-form button {
+        width: 100%;
+    }
+
+    .login-prompt {
+        text-align: center;
+        width: 100%;
+        order: 10;
+    }
+
+    .header-right {
+        width: 100%;
+        justify-content: center;
+        margin-top: 10px;
+    }
+    .auth-btn {
+        flex-grow: 1;
+        max-width: 45%;
+    }
 }

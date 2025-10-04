@@ -243,19 +243,17 @@ class GradientAPIView(BaseGradientAPIView):
 
 
 class PaletteAPIView(BaseGradientAPIView): 
-    def get_object(self, palette_id): 
-        """Helper to retrieve the palette object and perform the ownership check."""
+    def get_object(self, palette_id):
         palette = get_object_or_404(ColorPalette, id=palette_id)
         return palette
 
-    def check_ownership(self, request, palette): 
-        """Raises a permission error if the user is not the owner."""
+    def check_ownership(self, request, palette):
         if palette.user != request.user: 
             return Response(
                 {'detail': 'You do not have permission to perform this action.'},
                 status=status.HTTP_403_FORBIDDEN
             )
-        return None  # No error
+        return None
 
     def get(self, request, palette_id): 
         palette = self.get_object(palette_id)
