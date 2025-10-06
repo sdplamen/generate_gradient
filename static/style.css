@@ -23,7 +23,7 @@ header {
 .container {
     display: flex;
     flex-wrap: nowrap;
-    justify-content: space-between;
+    justify-content: center;
     gap: 20px;
     width: 1000px;
     margin: 40px 0;
@@ -220,7 +220,7 @@ button:hover {
     }
 
     .controls .color-input-form input {
-        width: 95%;
+        width: 90%;
     }
 }
 
