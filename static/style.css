@@ -24,9 +24,9 @@ header {
     display: flex;
     flex-wrap: nowrap;
     justify-content: space-between;
-    gap: 50px;
+    gap: 20px;
     width: 1000px;
-    margin: 40px auto;
+    margin: 40px 0;
 }
 
 .gradient-box {
@@ -42,9 +42,16 @@ header {
     z-index: 1;
 }
 
+.controls .color-input-form {
+    border: none;
+    border-radius: 0;
+}
+
 .controls .color-input-form input {
     width: 100%;
     height: 20%;
+    border: none;
+    border-radius: 0;
 }
 
 .color-swatch {
@@ -182,7 +189,7 @@ button:hover {
 }
 
 .css-code-container {
-    margin-top: 186px;
+    margin-top: 170px;
     margin-left: 150px;
 }
 .css-code-container textarea {
@@ -205,15 +212,15 @@ button:hover {
     .container {
         display: flex;
         flex-wrap: nowrap;
-        justify-content: space-around;
+        justify-content: space-between;
     }
 
     .gradient-box {
-        width: 800px;
+        width: 100%;
     }
 
     .controls .color-input-form input {
-        width: 65%;
+        width: 95%;
     }
 }
 
@@ -237,11 +244,11 @@ button:hover {
     }
 
     .gradient-box {
-        width: 650px;
+        width: 60%;
     }
 
     .controls .color-input-form input {
-        width: 65%;
+        width: 60%;
     }
 }
 
