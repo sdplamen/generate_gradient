@@ -13,18 +13,18 @@
 <section class="container">
     <div class="gradient-box" style="{{ css_code }}"></div>
     <div class="controls">
-
         <form method="GET" action="{% url 'generate_gradient' %}" class="color-input-form">
             {% for field in form %}
                 {% if field.name != 'random' %}
-                    {{ field.label_tag }}
+<!--                    {{ field.label_tag }}-->
                             {{ field }}
-                        <div class="color-swatch" style="background-color: {{ field.value }};" data-for="{{ field.id }}">
+                        <div class="color-swatch" data-for="{{ field.id }}">
+<!--                        <div class="color-swatch" style="background-color: {{ field.value }};" data-for="{{ field.id }}">-->
                             <span class="color-value-text">{{ field.value }}</span>
                         </div>
-                    {% if field.help_text %}
-                        <span class="helptext">{{ field.help_text }}</span>
-                    {% endif %}
+<!--                    {% if field.help_text %}-->
+<!--                        <span class="helptext">{{ field.help_text }}</span>-->
+<!--                    {% endif %}-->
                 {% endif %}
             {% endfor %}
             <button class="update">Update Gradient</button>
@@ -35,7 +35,7 @@
             <textarea id="css-code-area" class="css-code" readonly>{{ css_code }}</textarea>
         </div>
     </div>
-
+</section>
     <div class="saved-palettes">
         <article>
             <h2>Saved Palettes</h2>
@@ -64,7 +64,6 @@
             {% endif %}
         </div>
     </div>
-</section>
 <script src="{% static 'script.js' %}"></script>
 </body>
 </html>
