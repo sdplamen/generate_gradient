@@ -22,7 +22,7 @@
                 <button class="nav-btn">Save Palette</button>
             </form>
         {% else %}
-            <p class="login-info">Log in to save palettes</p>
+            <p class="login-info">Log in to save palette</p>
         {% endif %}
         </li>
         {% if user.is_authenticated %}
@@ -33,8 +33,8 @@
             </form>
 
         {% else %}
-        <li class="login"><a href="{% url 'login' %}">Login</a></li>
-        <li class="login"><a href="{% url 'register' %}">Register</a></li>
+        <li><a href="{% url 'login' %}">Login</a></li>
+        <li><a href="{% url 'register' %}">Register</a></li>
         </li>
         {% endif %}
     </ul>
