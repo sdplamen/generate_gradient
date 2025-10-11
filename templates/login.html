@@ -1,7 +1,7 @@
 {% extends "base.html" %}
 {% load static %}
 {% block content %}
-<section class="site-title">
+<section class="login">
     <h2>Login</h2>
 
     {% if form.non_field_errors %}
@@ -24,10 +24,10 @@
             </div>
         {% endfor %}
 
-        <button type="submit" class="submit-btn">Log In</button>
+        <button>Log In</button>
     </form>
 
-    <p class="auth-link-text">Don't have an account? <a href="{% url 'register' %}">Register here</a>.</p>
+    <p>Don't have an account? <a href="{% url 'register' %}">Register here</a>.</p>
 
 </section>
 {% endblock %}

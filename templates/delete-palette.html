@@ -5,7 +5,7 @@
     <h2>Are you sure?</h2>
     <p>You are about to delete the {{ palette.id }} {{ object }}. This action cannot be undone.</p>
 
-    <div class="delete">
+    <div class="delete-palette">
         <button><a href="{% url 'generate_gradient' %}">Cancel</a></button>
         <form action=" {% url 'delete-palette' object.pk %} " method="post">
             {% csrf_token %}

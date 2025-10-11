@@ -129,26 +129,30 @@ button:hover {
     color: #ffffcc;
 }
 
-.login {
+.login, .register {
+    display: flex;
+    flex-direction: column;
+    padding: 0 10px;
     text-align: center;
+    color: #ffffcc;
 }
 
-.edit button {
+.edit-palette button {
     width: 10%;
     height: 10%;
 }
 
-.edit a {
+.edit-palette a {
     text-decoration: none;
     color: #ffffcc;
 }
 
-.delete button {
+.delete-palette button {
     width: 10%;
     height: 10%;
 }
 
-.delete a {
+.delete-palette a {
     text-decoration: none;
     color: #ffffcc;
 }
