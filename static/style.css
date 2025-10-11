@@ -119,7 +119,7 @@ button:hover {
 
 .nav-header a:hover,
 .nav-header .nav-btn:hover {
-    /*background-color: #0f3763;*/
+    background-color: #0f3763;
 }
 
 .nav-header .save-palettes {
@@ -206,13 +206,13 @@ button:hover {
         align-items: stretch;
     }
 
-        .nav-header .title {
-            margin-right: 0;
-            width: 100%;
-            text-align: center;
-            margin-bottom: 10px;
-            font-size: 2rem;
-        }
+    .nav-header .title {
+        margin-right: 0;
+        width: 100%;
+        text-align: center;
+        margin-bottom: 10px;
+        font-size: 2rem;
+    }
 
     .saved-palettes,
     .nav-header li,
@@ -223,7 +223,7 @@ button:hover {
         display: block;
         padding: 5px 0;
         text-align: center;
-        font-size: 1.5rem;
+        font-size: 1.4rem;
     }
 }
 
@@ -249,6 +249,6 @@ button:hover {
         display: block;
         padding: 2px 0;
         text-align: center;
-        font-size: 1.6rem;
+        font-size: 1.4rem;
     }
 }
