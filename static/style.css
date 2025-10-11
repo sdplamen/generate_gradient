@@ -75,12 +75,20 @@ button {
 button:hover {
     background-color: #1f6acd;
     cursor: pointer;
-    color: antiquewhite;
+    color: #ffffcc;
 }
 
 .title {
-        color: #ffffcc;
-    }
+    color: #ffffcc;
+    text-decoration: none;
+    display: flex;
+    justify-content: center;
+}
+
+.header-title {
+    align-items: center;
+    color: #ffffcc;
+}
 
 .nav-header {
     background-color: #001535;
@@ -97,19 +105,21 @@ button:hover {
     align-items: center;
 }
 
-.nav-header h1 {
-    font-size: 1.5rem;
-    margin: 0;
+.login-btn {
+    display: flex;
+    align-items: center;
 }
 
 .nav-header a,
 .nav-header .nav-btn {
     width: 100%;
+    height: 100%;
+    background-color: #0f3763;
+    /*background: none;*/
     color: #ffffcc;
     text-decoration: none;
-    background: none;
     border: none;
-    padding: 3px 12px;
+    padding: 15px;
     cursor: pointer;
     font-size: 1rem;
     border-radius: 5px;
@@ -119,7 +129,7 @@ button:hover {
 
 .nav-header a:hover,
 .nav-header .nav-btn:hover {
-    background-color: #0f3763;
+    background-color: #08458f;
 }
 
 .nav-header .save-palettes {
@@ -153,7 +163,7 @@ button:hover {
     /*top: 150px;*/
 }
 .saved-palettes li.active-palette {
-    background-color: #1f6acd;
+    background-color: #0f3763;
     font-weight: bold;
     padding-left: 15px;
 }
@@ -191,7 +201,7 @@ button:hover {
     /*color: #ffffcc;*/
 }
 
-@media (max-width: 950px) {
+@media (max-width: 800px) {
     .container {
         display: flex;
         flex-wrap: wrap;
@@ -200,18 +210,8 @@ button:hover {
 
     .nav-header ul {
         flex-direction: column;
-        flex-wrap: wrap;
-        justify-content: center;
         gap: 5px;
         align-items: stretch;
-    }
-
-    .nav-header .title {
-        margin-right: 0;
-        width: 100%;
-        text-align: center;
-        margin-bottom: 10px;
-        font-size: 2rem;
     }
 
     .saved-palettes,
