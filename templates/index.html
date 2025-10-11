@@ -57,10 +57,10 @@
         </article>
         <div class="pagination">
             {% if saved_palettes.has_previous %}
-                <a href="?page={{ saved_palettes.previous_page_number }}">Previous</a>
+                <button><a href="?page={{ saved_palettes.previous_page_number }}">Previous</a></button>
             {% endif %}
             {% if saved_palettes.has_next %}
-                <a href="?page={{ saved_palettes.next_page_number }}">Next</a>
+                <button><a href="?page={{ saved_palettes.next_page_number }}">Next</a></button>
             {% endif %}
         </div>
     </div>

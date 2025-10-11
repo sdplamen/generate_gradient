@@ -24,15 +24,15 @@ header {
     display: flex;
     flex-wrap: nowrap;
     justify-content: space-between;
-    gap: 50px;
-    width: 1000px;
+    gap: 20px;
+    width: 100%;
     margin: 40px auto;
 }
 
 .gradient-box {
     width: 1200px;
     height: 500px;
-    border: 0.5px solid antiquewhite;
+    border: 0.5px solid #f3f2f2;
 }
 
 .controls {
@@ -42,9 +42,17 @@ header {
     z-index: 1;
 }
 
+.controls .color-input-form {
+    border: none;
+    outline: none;
+    border-radius: 0;
+}
+
 .controls .color-input-form input {
     width: 100%;
     height: 20%;
+    border: none;
+    border-radius: 0;
 }
 
 .color-swatch {
@@ -75,63 +83,54 @@ button:hover {
     cursor: pointer;
     color: antiquewhite;
 }
-/* style.css additions for the new nav-bar */
-.main-header {
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    padding: 10px 30px;
+
+.nav-header {
     background-color: #001535;
-    color: antiquewhite;
-    box-shadow: 0 2px 5px rgba(0, 0, 0, 0.2);
+    padding: 5px;
 }
 
-.site-title {
-    display: block;
-    color: antiquewhite;
-    text-decoration: none;
-}
-
-.header-center {
-    display: flex;
-    gap: 30px;
-    align-items: center;
-    justify-content: center;
-    flex-grow: 1;
-}
-
-.nav-form button, .auth-btn {
-    padding: 10px 15px;
-    border: none;
-    border-radius: 5px;
-    cursor: pointer;
-    font-weight: 500;
-    text-decoration: none;
-    text-align: center;
-    display: inline-flex;
-    align-items: center;
-    justify-content: center;
-    background-color: #0f3763;
-    color: antiquewhite;
-    transition: background-color 0.2s;
-}
-
-.nav-form button:hover, .auth-btn:hover {
-    background-color: #1a4f8a;
-}
-
-.login-prompt {
-    font-size: 0.9em;
-    color: antiquewhite;
+.nav-header ul {
+    list-style: none;
     margin: 0;
-    line-height: 1;
-    padding: 10px 0;
+    padding: 0;
+    display: flex;
+    justify-content: space-around;
+    gap: 20px;
+    align-items: center;
 }
 
-.auth-link-text a {
-    font-weight: 600;
+.nav-header h1 {
+    font-size: 1.5rem;
+    margin: 0;
+}
+
+.nav-header a,
+.nav-header .nav-btn {
+    width: 100%;
+    color: #ffffcc;
     text-decoration: none;
-    color: #dcf151;
+    background: none;
+    border: none;
+    padding: 3px 12px;
+    cursor: pointer;
+    font-size: 1rem;
+    border-radius: 5px;
+    transition: background-color 0.2s;
+    display: inline-block;
+}
+
+.nav-header a:hover,
+.nav-header .nav-btn:hover {
+    background-color: #0f3763;
+}
+
+.nav-header .save-palettes {
+    background: none;
+    color: #ffffcc;
+}
+
+.login {
+    text-align: center;
 }
 
 .edit button {
@@ -141,7 +140,7 @@ button:hover {
 
 .edit a {
     text-decoration: none;
-    color: antiquewhite;
+    color: #ffffcc;
 }
 
 .delete button {
@@ -151,11 +150,11 @@ button:hover {
 
 .delete a {
     text-decoration: none;
-    color: antiquewhite;
+    color: #ffffcc;
 }
 .saved-palettes {
     display: flex;
-    justify-content: center;
+    justify-content: space-evenly;
     /*position: fixed;*/
     /*right: 50px;*/
     /*top: 150px;*/
@@ -175,14 +174,12 @@ button:hover {
 }
 
 .pagination a {
-    display: flex;
-    justify-content: flex-start;
     text-decoration: none;
     color: #ffffcc;
 }
 
 .css-code-container {
-    margin-top: 186px;
+    margin-top: 175px;
     margin-left: 150px;
 }
 .css-code-container textarea {
@@ -205,96 +202,89 @@ button:hover {
     .container {
         display: flex;
         flex-wrap: nowrap;
-        justify-content: space-around;
+
     }
 
     .gradient-box {
-        width: 800px;
+        width: 100%;
     }
 
     .controls .color-input-form input {
-        width: 65%;
+        width: 100%;
+    }
+
+    .nav-header ul {
+        gap: 10px;
+    }
+    .nav-header a, .nav-header .nav-btn {
+        padding: 6px 10px;
     }
 }
 
 @media (max-width: 800px) {
-    .main-header {
-        padding: 10px 20px;
-    }
-
-    .header-center {
-        gap: 20px;
-    }
-    .nav-form button, .auth-btn {
-        padding: 8px 12px;
-        font-size: 0.9em;
-    }
-
     .container {
         display: flex;
         flex-wrap: wrap;
         justify-content: space-between;
     }
 
-    .gradient-box {
-        width: 650px;
-    }
-
-    .controls .color-input-form input {
-        width: 65%;
-    }
-}
-
-@media (max-width: 600px) {
-    .main-header {
+    .nav-header ul {
         flex-direction: column;
-        align-items: flex-start;
-        gap: 10px;
-        padding: 15px 15px;
+        gap: 5px;
+        align-items: stretch;
     }
 
-    .header-left {
+    .nav-header ul {
+        flex-wrap: wrap;
+        justify-content: center;
+    }
+
+    .nav-header .title {
+        margin-right: 0;
         width: 100%;
         text-align: center;
         margin-bottom: 10px;
     }
 
-    .header-center {
-        width: 100%;
-        flex-wrap: wrap;
-        justify-content: space-around;
-        gap: 10px;
+    .nav-header .title {
+        font-size: 2rem;
     }
 
-    .nav-form {
-        flex: 1 1 45%;
-        margin: 5px 0;
-    }
-
-    .nav-form button {
-        width: 100%;
-    }
-
-    .login-prompt {
+    .saved-palettes,
+    .nav-header li,
+    .nav-header a,
+    .nav-header .nav-btn,
+    .nav-header form,
+    .login-info{
+        display: block;
+        padding: 2px 0;
         text-align: center;
-        width: 100%;
-        order: 10;
+        font-size: 1.2rem;
+    }
+}
+
+@media (max-width: 600px) {
+    .container {
+        display: flex;
+        flex-wrap: wrap;
+        justify-content: space-between;
     }
 
-    .header-right {
-        width: 100%;
-        justify-content: center;
-        margin-top: 10px;
-    }
-    .auth-btn {
-        flex-grow: 1;
-        max-width: 45%;
+    .nav-header ul {
+        flex-direction: column;
+        gap: 5px;
+        align-items: stretch;
     }
 
-    .gradient-box {
-        width: 500px;
-    }
-    .controls .color-input-form input {
-        width: 50%;
+    .saved-palettes,
+    .nav-header li,
+    .nav-header a,
+    .nav-header .nav-btn,
+    .nav-header form,
+    .login-info{
+        display: block;
+        padding: 2px 0;
+        text-align: center;
+        font-size: 1.5rem;
     }
 }
