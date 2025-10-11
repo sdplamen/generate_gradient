@@ -13,12 +13,6 @@ body {
     box-sizing: border-box;
     overflow: scroll;
 }
-header {
-    display: flex;
-    justify-content: center;
-    position: relative;
-    top: 0;
-}
 
 .container {
     display: flex;
@@ -30,13 +24,13 @@ header {
 }
 
 .gradient-box {
-    width: 1200px;
+    width: 100%;
     height: 500px;
     border: 0.5px solid #f3f2f2;
 }
 
 .controls {
-    width: 1200px;
+    width: 100%;
     display: flex;
     flex-direction: column;
     z-index: 1;
@@ -84,6 +78,10 @@ button:hover {
     color: antiquewhite;
 }
 
+.title {
+        color: #ffffcc;
+    }
+
 .nav-header {
     background-color: #001535;
     padding: 5px;
@@ -95,7 +93,7 @@ button:hover {
     padding: 0;
     display: flex;
     justify-content: space-around;
-    gap: 20px;
+    gap: 10px;
     align-items: center;
 }
 
@@ -121,7 +119,7 @@ button:hover {
 
 .nav-header a:hover,
 .nav-header .nav-btn:hover {
-    background-color: #0f3763;
+    /*background-color: #0f3763;*/
 }
 
 .nav-header .save-palettes {
@@ -142,7 +140,7 @@ button:hover {
 }
 .edit-palette a, .delete-palette a, .login a, .register a {
     text-decoration: none;
-    background-color: #0f3763;
+    background-color: #205067;
     padding: 5px;
     color: #ffffcc;
 }
@@ -193,28 +191,6 @@ button:hover {
     /*color: #ffffcc;*/
 }
 
-@media (max-width: 1024px) {
-    .container {
-        display: flex;
-        flex-wrap: nowrap;
-    }
-
-    .gradient-box {
-        width: 100%;
-    }
-
-    .controls .color-input-form input {
-        width: 100%;
-    }
-
-    .nav-header ul {
-        gap: 10px;
-    }
-    .nav-header a, .nav-header .nav-btn {
-        padding: 6px 10px;
-    }
-}
-
 @media (max-width: 950px) {
     .container {
         display: flex;
@@ -224,25 +200,19 @@ button:hover {
 
     .nav-header ul {
         flex-direction: column;
-        /*gap: 5px;*/
-        /*align-items: stretch;*/
-    }
-
-    .nav-header ul {
         flex-wrap: wrap;
         justify-content: center;
+        gap: 5px;
+        align-items: stretch;
     }
 
-    .nav-header .title {
-        margin-right: 0;
-        width: 100%;
-        text-align: center;
-        margin-bottom: 10px;
-    }
-
-    .nav-header .title {
-        font-size: 2rem;
-    }
+        .nav-header .title {
+            margin-right: 0;
+            width: 100%;
+            text-align: center;
+            margin-bottom: 10px;
+            font-size: 2rem;
+        }
 
     .saved-palettes,
     .nav-header li,
@@ -251,9 +221,9 @@ button:hover {
     .nav-header form,
     .login-info{
         display: block;
-        padding: 2px 0;
+        padding: 5px 0;
         text-align: center;
-        font-size: 1.2rem;
+        font-size: 1.5rem;
     }
 }
 
@@ -279,6 +249,6 @@ button:hover {
         display: block;
         padding: 2px 0;
         text-align: center;
-        font-size: 1.5rem;
+        font-size: 1.6rem;
     }
 }

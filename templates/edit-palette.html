@@ -1,43 +1,40 @@
 {% extends "base.html" %}
 {% load static %}
 {% block content %}
-<div>
-    <header>
-        <h2>Edit Palette</h2>
-        <p>Update the color scheme for <span>{{ object }}</span>.</p>
-    </header>
-
-    <section>
-        {% if errors %}
-            <div>
-                <p>Please correct the following errors:</p>
-                <ul>
-                    {% for field, error_list in errors.items %}
-                        {% for error in error_list %}
-                            <li>{{ field }}: {{ error }}</li>
-                        {% endfor %}
+<header class="title">
+    <h2>Edit Palette</h2>
+    <p>Update the color scheme for<br>{{ object }}.</p>
+</header>
+<section>
+    {% if errors %}
+        <div>
+            <p>Please correct the following errors:</p>
+            <ul>
+                {% for field, error_list in errors.items %}
+                    {% for error in error_list %}
+                        <li>{{ field }}: {{ error }}</li>
                     {% endfor %}
-                </ul>
+                {% endfor %}
+            </ul>
+        </div>
+    {% endif %}
+    <form action="{% url 'edit-palette' object.pk %}" method="post">
+        {% csrf_token %}
+        {% for field in form %}
+            <div>
+<!--                <label for="{{ field.id_for_label }}">-->
+<!--                    {{ field.label }}-->
+<!--                </label>-->
+                {{ field }}
+                {% if field.errors %}
+                    <p>{{ field.errors.as_text }}</p>
+                {% endif %}
             </div>
-        {% endif %}
-        <form action="{% url 'edit-palette' object.pk %}" method="post">
-            {% csrf_token %}
-            {% for field in form %}
-                <div>
-                    <label for="{{ field.id_for_label }}">
-                        {{ field.label }}
-                    </label>
-                    {{ field }}
-                    {% if field.errors %}
-                        <p>{{ field.errors.as_text }}</p>
-                    {% endif %}
-                </div>
-            {% endfor %}
-            <div class="edit-palette">
-                <button><a href="{% url 'generate_gradient' %}">Cancel</a></button>
-                <button class="edit">Update</button>
-            </div>
-        </form>
-    </section>
-</div>
+        {% endfor %}
+        <div class="edit-palette">
+            <button><a href="{% url 'generate_gradient' %}">Cancel</a></button>
+            <button>Update</button>
+        </div>
+    </form>
+</section>
 {% endblock %}
