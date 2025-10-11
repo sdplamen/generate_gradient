@@ -132,30 +132,21 @@ button:hover {
 .login, .register {
     display: flex;
     flex-direction: column;
-    padding: 0 10px;
+    padding: 0 20px;
     text-align: center;
     color: #ffffcc;
 }
 
-.edit-palette button {
-    width: 10%;
-    height: 10%;
+.login .form-group, .register .form-group {
+    padding: 5px;
 }
-
-.edit-palette a {
+.edit-palette a, .delete-palette a, .login a, .register a {
     text-decoration: none;
+    background-color: #0f3763;
+    padding: 5px;
     color: #ffffcc;
 }
 
-.delete-palette button {
-    width: 10%;
-    height: 10%;
-}
-
-.delete-palette a {
-    text-decoration: none;
-    color: #ffffcc;
-}
 .saved-palettes {
     display: flex;
     justify-content: space-evenly;
@@ -206,7 +197,6 @@ button:hover {
     .container {
         display: flex;
         flex-wrap: nowrap;
-
     }
 
     .gradient-box {
@@ -225,7 +215,7 @@ button:hover {
     }
 }
 
-@media (max-width: 800px) {
+@media (max-width: 950px) {
     .container {
         display: flex;
         flex-wrap: wrap;
@@ -234,8 +224,8 @@ button:hover {
 
     .nav-header ul {
         flex-direction: column;
-        gap: 5px;
-        align-items: stretch;
+        /*gap: 5px;*/
+        /*align-items: stretch;*/
     }
 
     .nav-header ul {
