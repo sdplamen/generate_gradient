@@ -1,15 +1,8 @@
-<!DOCTYPE html>
+{% extends "base.html" %}
 {% load static %}
-<html lang="en">
-<head>
-    <meta charset="UTF-8">
-    <title>Gradient Generator</title>
-    <link rel="stylesheet" href="{% static 'style.css' %}">
-</head>
-<body>
 
 {% include 'nav-bar.html' %}
-
+{% block content %}
 <section class="container">
     <div class="gradient-box" style="{{ css_code }}"></div>
     <div class="controls">
@@ -65,5 +58,4 @@
         </div>
     </div>
 <script src="{% static 'script.js' %}"></script>
-</body>
-</html>
+{% endblock %}
