@@ -29,9 +29,12 @@
         </div>
     </div>
 </section>
-    <div class="saved-palettes">
-        <article>
+<section class="saved-palettes">
+    <details>
+        <summary>
             <h2>Saved Palettes</h2>
+        </summary>
+        <article>
             <ul type="none">
                 {% for palette in saved_palettes %}
                 <li {% if palette.id == active_palette_id %}class="active-palette"{% endif %}>
@@ -47,15 +50,16 @@
                 <li>No palettes saved yet.</li>
                 {% endfor %}
             </ul>
+            <div class="pagination">
+                {% if saved_palettes.has_previous %}
+                    <button><a href="?page={{ saved_palettes.previous_page_number }}">Previous</a></button>
+                {% endif %}
+                {% if saved_palettes.has_next %}
+                    <button><a href="?page={{ saved_palettes.next_page_number }}">Next</a></button>
+                {% endif %}
+            </div>
         </article>
-        <div class="pagination">
-            {% if saved_palettes.has_previous %}
-                <button><a href="?page={{ saved_palettes.previous_page_number }}">Previous</a></button>
-            {% endif %}
-            {% if saved_palettes.has_next %}
-                <button><a href="?page={{ saved_palettes.next_page_number }}">Next</a></button>
-            {% endif %}
-        </div>
-    </div>
+    </details>
+</section>
 <script src="{% static 'script.js' %}"></script>
 {% endblock %}
