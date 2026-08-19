@@ -1,14 +1,14 @@
 {% load static %}
 <header class="nav-header">
     <ul>
-        <li class="random-color">
-            <form method="GET" action="{% url 'generate_gradient' %}" class="nav-form">
-                <button class="nav-btn" name="random" value="true">Random Colors</button>
+        <li class="random-color visually-hidden-btn">
+            <form method="GET" action="{% url 'generate_gradient' %}" class="nav-form" id="random-color-form">
+                <button class="nav-btn" name="random" value="true" id="random-color-btn">Random Colors</button>
             </form>
         </li>
-        <li class="random-saved-palettes">
-            <form method="GET" action="{% url 'get_saved_palette' %}">
-                <button class="nav-btn">Random Saved Palettes</button>
+        <li class="random-saved-palettes visually-hidden-btn">
+            <form method="GET" action="{% url 'get_saved_palette' %}" id="random-saved-form">
+                <button class="nav-btn" id="random-saved-btn">Random Saved Palettes</button>
             </form>
         </li>
         <li class="save-palettes">
@@ -30,7 +30,6 @@
                 {% csrf_token %}
                 <button class="nav-btn">Logout</button>
             </form>
-
         {% else %}
         <li class="login-btn"><a href="{% url 'login' %}">Login</a></li>
         <li class="login-btn"><a href="{% url 'register' %}">Register</a></li>
