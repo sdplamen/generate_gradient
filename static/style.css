@@ -251,6 +251,15 @@ button:hover {
         text-align: center;
         font-size: 1.4rem;
     }
+    .visually-hidden-btn {
+        position: static;
+        width: auto;
+        height: auto;
+        margin: 0;
+        overflow: visible;
+        clip: auto;
+        white-space: normal;
+    }
 }
 
 @media (max-width: 600px) {
