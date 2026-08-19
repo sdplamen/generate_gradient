@@ -245,21 +245,14 @@ button:hover {
     .nav-header a,
     .nav-header .nav-btn,
     .nav-header form,
-    .login-info{
+    .login-info {
         display: block;
         padding: 5px 0;
         text-align: center;
         font-size: 1.4rem;
     }
-    .visually-hidden-btn {
-        position: static;
-        width: auto;
-        height: auto;
-        margin: 0;
-        overflow: visible;
-        clip: auto;
-        white-space: normal;
-    }
+
+    /* no .visually-hidden-btn override — stays hidden */
 }
 
 @media (max-width: 600px) {
