@@ -34,40 +34,49 @@ document.addEventListener('keydown', (event) => {
     }
 });
 
-// Mobile: tap anywhere = random colors, two-finger tap = random saved palettes
-let touchStartTime = 0;
+// Mobile: long press = random colors, two-finger long press = random saved palettes
+const LONG_PRESS_MS = 500;
+const MOVE_TOLERANCE = 10; // px — cancel if finger drifts more than this
+
+let pressTimer = null;
+let touchStartX = 0;
+let touchStartY = 0;
+let longPressFired = false;
+
+function isInteractiveTarget(target) {
+    const tag = target.tagName;
+    return tag === 'INPUT' || tag === 'TEXTAREA' || tag === 'SELECT' || tag === 'A' || tag === 'BUTTON';
+}
 
 document.addEventListener('touchstart', (event) => {
-    touchStartTime = Date.now();
+    if (isInteractiveTarget(event.target)) return;
 
-    const tag = event.target.tagName;
-    if (tag === 'INPUT' || tag === 'TEXTAREA' || tag === 'SELECT' || tag === 'A' || tag === 'BUTTON') return;
+    longPressFired = false;
+    const touch = event.touches[0];
+    touchStartX = touch.clientX;
+    touchStartY = touch.clientY;
 
-    if (event.touches.length === 2) {
-        event.preventDefault();
-        if (randomSavedBtn) randomSavedBtn.click();
-    }
-}, { passive: false });
+    const isTwoFinger = event.touches.length === 2;
 
-document.addEventListener('touchend', (event) => {
-    const tag = event.target.tagName;
-    if (tag === 'INPUT' || tag === 'TEXTAREA' || tag === 'SELECT' || tag === 'A' || tag === 'BUTTON') return;
-
-    // ignore long presses / accidental drags — treat only quick taps as trigger
-    const duration = Date.now() - touchStartTime;
-    if (duration > 300) return;
-
-    // ignore if this was part of a multi-touch gesture (handled in touchstart)
-    if (event.changedTouches.length > 1 || event.touches.length > 0) return;
-
-    if (randomColorBtn) randomColorBtn.click();
+    pressTimer = setTimeout(() => {
+        longPressFired = true;
+        if (isTwoFinger) {
+            if (randomSavedBtn) randomSavedBtn.click();
+        } else {
+            if (randomColorBtn) randomColorBtn.click();
+        }
+        // optional: haptic-ish feedback via a quick CSS class toggle could go here
+    }, LONG_PRESS_MS);
 }, { passive: true });
 
-document.getElementById('copy').addEventListener('click', () => {
-    const cssCode = document.getElementById('css-code-area');
-    cssCode.style.display = 'block';
-    cssCode.select();
-    document.execCommand('copy');
-    cssCode.style.display = 'none';
-    // alert('CSS code copied to clipboard!');
-});
+document.addEventListener('touchmove', (event) => {
+    if (!pressTimer) return;
+    const touch = event.touches[0];
+    const dx = Math.abs(touch.clientX - touchStartX);
+    const dy = Math.abs(touch.clientY - touchStartY);
+
+    if (dx > MOVE_TOLERANCE || dy > MOVE_TOLERANCE) {
+        clearTimeout(pressTimer);
+        pressTimer = null;
+    }
+}, { passive: true });
