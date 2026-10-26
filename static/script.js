@@ -80,3 +80,41 @@ document.addEventListener('touchmove', (event) => {
         pressTimer = null;
     }
 }, { passive: true });
+// Copy the generated CSS code to the clipboard
+document.addEventListener('DOMContentLoaded', () => {
+    const copyBtn = document.getElementById('copy');
+    const cssCodeArea = document.getElementById('css-code-area');
+    if (!copyBtn || !cssCodeArea) return;
+
+    const originalText = copyBtn.textContent;
+
+    function showCopied(text) {
+        copyBtn.textContent = text;
+        setTimeout(() => {
+            copyBtn.textContent = originalText;
+        }, 1500);
+    }
+
+    copyBtn.addEventListener('click', async () => {
+        // Copy only the hex codes, e.g. "#1a2b3c, #4d5e6f"
+        const hexCodes = cssCodeArea.value.match(/#[0-9a-fA-F]{3,8}\b/g);
+        if (!hexCodes) return;
+        const code = hexCodes.join(', ');
+
+        try {
+            await navigator.clipboard.writeText(code);
+            showCopied('Copied!');
+        } catch (err) {
+            // Fallback for browsers or non-HTTPS pages without the Clipboard API
+            const temp = document.createElement('textarea');
+            temp.value = code;
+            temp.style.position = 'fixed';
+            temp.style.opacity = '0';
+            document.body.appendChild(temp);
+            temp.select();
+            const ok = document.execCommand('copy');
+            document.body.removeChild(temp);
+            showCopied(ok ? 'Copied!' : 'Copy failed');
+        }
+    });
+});

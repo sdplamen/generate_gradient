@@ -20,11 +20,13 @@
 <!--                    {% endif %}-->
                 {% endif %}
             {% endfor %}
-            <button class="update">Update Gradient</button>
+            <div class="form-buttons">
+                <button class="update">Update Gradient</button>
+                <button type="button" id="copy">Copy Code</button>
+            </div>
         </form>
 
         <div class="css-code-container">
-            <button id="copy">Copy Code</button>
             <textarea id="css-code-area" class="css-code" readonly>{{ css_code }}</textarea>
         </div>
     </div>
