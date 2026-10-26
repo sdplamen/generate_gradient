@@ -65,3 +65,6 @@ This project is licensed under the MIT License. See the LICENSE file for details
 
 ## Contact
 For questions or feedback, reach out via GitHub Issues or contact sdplamen@gmail.com.
+
+**Live Demo:** [https://generate-gradient-u657.onrender.com](https://generate-gradient-u657.onrender.com)
+Note: Hosted on Render's free tier. If the link takes ~30 seconds to load initially, it is waking up the server instance.
