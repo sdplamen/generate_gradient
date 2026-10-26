@@ -7,8 +7,10 @@
     <div class="gradient-box" style="{{ css_code }}"></div>
     <div class="controls">
         <form method="GET" action="{% url 'generate_gradient' %}" class="color-input-form">
+            <div class="color-fields">
             {% for field in form %}
                 {% if field.name != 'random' %}
+                    <div class="color-field">
 <!--                    {{ field.label_tag }}-->
                             {{ field }}
                         <div class="color-swatch" data-for="{{ field.id }}">
@@ -18,8 +20,10 @@
 <!--                    {% if field.help_text %}-->
 <!--                        <span class="helptext">{{ field.help_text }}</span>-->
 <!--                    {% endif %}-->
+                    </div>
                 {% endif %}
             {% endfor %}
+            </div>
             <div class="form-buttons">
                 <button class="update">Update Gradient</button>
                 <button type="button" id="copy">Copy Code</button>
