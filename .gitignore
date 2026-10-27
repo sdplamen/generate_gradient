@@ -29,6 +29,7 @@ media/
 staticfiles/
 
 # IDEs / editors
+.claude/
 .idea/
 .vscode/
 *.swp
