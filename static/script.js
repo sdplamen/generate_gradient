@@ -118,3 +118,38 @@ document.addEventListener('DOMContentLoaded', () => {
         }
     });
 });
+
+// Keep each hex label readable: dark text on light colors, light text on dark ones
+document.addEventListener('DOMContentLoaded', () => {
+    const LIGHT_TEXT = '#f3f2f2';
+    const DARK_TEXT = '#1a1a1a';
+
+    // WCAG relative luminance of a "#rrggbb" color
+    function luminance(hex) {
+        const channels = [1, 3, 5].map(i => parseInt(hex.slice(i, i + 2), 16) / 255);
+        const [r, g, b] = channels.map(c => (c <= 0.03928 ? c / 12.92 : ((c + 0.055) / 1.055) ** 2.4));
+        return 0.2126 * r + 0.7152 * g + 0.0722 * b;
+    }
+
+    // Pick whichever text color gives the higher contrast ratio
+    function readableTextColor(hex) {
+        const bg = luminance(hex);
+        const contrastWithLight = (luminance(LIGHT_TEXT) + 0.05) / (bg + 0.05);
+        const contrastWithDark = (bg + 0.05) / (luminance(DARK_TEXT) + 0.05);
+        return contrastWithDark > contrastWithLight ? DARK_TEXT : LIGHT_TEXT;
+    }
+
+    document.querySelectorAll('.color-swatch').forEach(swatch => {
+        const input = swatch.closest('.color-field').querySelector('input[type="color"]');
+        const label = swatch.querySelector('.color-value-text');
+        if (!input || !label) return;
+
+        function updateLabel() {
+            label.textContent = input.value;
+            label.style.color = readableTextColor(input.value);
+        }
+
+        updateLabel();
+        input.addEventListener('input', updateLabel);
+    });
+});

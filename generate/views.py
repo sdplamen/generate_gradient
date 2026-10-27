@@ -79,12 +79,13 @@ class GradientGeneratorView(View, GradientContextMixin):
             colors = get_gradient_colors()
         else: 
             form = GradientForm(request.GET or None)
-            if form.is_valid(): 
+            if form.is_valid():
                 colors = self.get_colors_from_form(form)
-            else: 
+            else:
                 colors = get_gradient_colors()
+                form = None
 
-        if not form: 
+        if not form:
             form = GradientForm(initial={f'color{i + 1}': colors[i] for i in range(6)})
 
         context = self.get_gradient_context(request, colors, active_palette_id)
