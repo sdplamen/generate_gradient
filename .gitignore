@@ -25,8 +25,6 @@ db.sqlite3-journal
 gradient_generator_db
 gradient_generator_db-journal
 media/
-# Output of `python manage.py collectstatic` (regenerated on deploy)
-staticfiles/
 
 # IDEs / editors
 .claude/
