@@ -20,14 +20,13 @@ htmlcov/
 
 # Django
 *.log
-db.sqlite3
-db.sqlite3-journal
-gradient_generator_db
-gradient_generator_db-journal
-media/
+#db.sqlite3
+#db.sqlite3-journal
+#gradient_generator_db
+#gradient_generator_db-journal
+#media/
 
 # IDEs / editors
-.claude/
 .idea/
 .vscode/
 *.swp
