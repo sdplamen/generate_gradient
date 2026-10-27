@@ -153,3 +153,15 @@ document.addEventListener('DOMContentLoaded', () => {
         input.addEventListener('input', updateLabel);
     });
 });
+
+// Briefly show "Saved!" on the Save Palette button after a successful save
+document.addEventListener('DOMContentLoaded', () => {
+    const saveBtn = document.getElementById('save-palette-btn');
+    if (!saveBtn || !saveBtn.dataset.saved) return;
+
+    const originalText = saveBtn.textContent;
+    saveBtn.textContent = 'Saved!';
+    setTimeout(() => {
+        saveBtn.textContent = originalText;
+    }, 1500);
+});

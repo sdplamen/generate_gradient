@@ -1,4 +1,5 @@
 import random
+from django.contrib import messages
 from django.contrib.auth import login
 from django.contrib.auth.forms import UserCreationForm, AuthenticationForm
 from django.contrib.auth.mixins import LoginRequiredMixin
@@ -101,6 +102,7 @@ class GradientGeneratorView(View, GradientContextMixin):
         if form.is_valid():
             colors = self.get_colors_from_form(form)
             ColorPalette.objects.create(user=request.user, colors=colors)
+            messages.success(request, 'Palette saved', extra_tags='palette-saved')
 
             return redirect(f'{reverse_lazy("generate_gradient")}?{request.POST.urlencode()}')
 

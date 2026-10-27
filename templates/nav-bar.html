@@ -18,7 +18,7 @@
                 {% for color in colors %}
                     <input type="hidden" name="color{{ forloop.counter }}" value="{{ color }}">
                 {% endfor %}
-                <button class="nav-btn">Save Palette</button>
+                <button class="nav-btn" id="save-palette-btn"{% for message in messages %}{% if 'palette-saved' in message.tags %} data-saved="true"{% endif %}{% endfor %}>Save Palette</button>
             </form>
         {% else %}
             <p class="login-info">Log in to save palette</p>
