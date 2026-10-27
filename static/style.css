@@ -104,6 +104,7 @@ body {
 .nav-header .login-btn a,
 .nav-header li .nav-btn {
     box-sizing: border-box;
+    height: 30px;
     display: inline-flex;
     align-items: center;
     justify-content: center;
