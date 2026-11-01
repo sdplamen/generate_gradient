@@ -1,0 +1,30 @@
+FROM python:3.13-slim
+
+ENV PYTHONDONTWRITEBYTECODE=1 \
+    PYTHONUNBUFFERED=1 \
+    PIP_NO_CACHE_DIR=1 \
+    PIP_DISABLE_PIP_VERSION_CHECK=1
+
+WORKDIR /app
+
+COPY requirements.txt .
+RUN pip install -r requirements.txt
+
+COPY . .
+
+# Collect static files at build time; a throwaway key is enough for this step.
+RUN SECRET_KEY=build-only-key python manage.py collectstatic --noinput
+
+# Run as an unprivileged user; /app/data holds the SQLite database (mount a volume there to keep it).
+RUN useradd --create-home appuser \
+    && mkdir -p /app/data \
+    && if [ -f gradient_generator_db ]; then cp gradient_generator_db /app/data/; fi \
+    && chown -R appuser:appuser /app
+USER appuser
+
+ENV DB_PATH=/app/data/gradient_generator_db \
+    PORT=8000
+
+EXPOSE 8000
+
+CMD ["sh", "-c", "python manage.py migrate --noinput && exec gunicorn generate_gradient.wsgi:application --bind 0.0.0.0:${PORT} --workers 3 --access-logfile -"]
