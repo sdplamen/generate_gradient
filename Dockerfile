@@ -12,8 +12,9 @@ RUN pip install -r requirements.txt
 
 COPY . .
 
-# Collect static files at build time; a throwaway key is enough for this step.
-RUN SECRET_KEY=build-only-key python manage.py collectstatic --noinput
+# Collect static files and run the tests at build time; a throwaway key is enough for these steps.
+RUN SECRET_KEY=build-only-key python manage.py collectstatic --noinput \
+    && SECRET_KEY=build-only-key python manage.py test generate
 
 # Run as an unprivileged user; /app/data holds the SQLite database (mount a volume there to keep it).
 RUN useradd --create-home appuser \
@@ -23,8 +24,9 @@ RUN useradd --create-home appuser \
 USER appuser
 
 ENV DB_PATH=/app/data/gradient_generator_db \
-    PORT=8000
+    PORT=8000 \
+    WEB_CONCURRENCY=3
 
 EXPOSE 8000
 
-CMD ["sh", "-c", "python manage.py migrate --noinput && exec gunicorn generate_gradient.wsgi:application --bind 0.0.0.0:${PORT} --workers 3 --access-logfile -"]
+CMD ["sh", "-c", "python manage.py migrate --noinput && exec gunicorn generate_gradient.wsgi:application --bind 0.0.0.0:${PORT} --workers ${WEB_CONCURRENCY} --access-logfile -"]

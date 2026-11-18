@@ -1,6 +1,7 @@
 .git
 .gitignore
 .idea
+.claude
 .vscode
 .DS_Store
 venv
