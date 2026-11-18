@@ -181,6 +181,12 @@ button:hover {
     color: #ffffcc;
 }
 
+.form-error {
+    margin: 8px auto;
+    text-align: center;
+    color: #ffb3b3;
+}
+
 .login-btn {
     display: flex;
     align-items: center;

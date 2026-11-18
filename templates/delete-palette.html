@@ -3,11 +3,11 @@
 {% block content %}
 <header class="header-title">
     <h2>Are you sure?</h2>
-    <p>You are about to delete the {{ palette.id }}<br>{{ object }}.<br>This action cannot be undone.</p>
+    <p>You are about to delete<br>{{ object }}.<br>This action cannot be undone.</p>
 </header>
 <div class="delete-palette">
     <button><a href="{% url 'generate_gradient' %}">Cancel</a></button>
-    <form action=" {% url 'delete-palette' object.pk %} " method="post">
+    <form action="{% url 'delete-palette' object.pk %}" method="post">
         {% csrf_token %}
         <button>Confirm Deletion</button>
     </form>

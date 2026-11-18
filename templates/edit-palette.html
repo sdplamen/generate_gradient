@@ -6,28 +6,13 @@
     <p>Update the color scheme for<br>{{ object }}.</p>
 </header>
 <section>
-    {% if errors %}
-        <div>
-            <p>Please correct the following errors:</p>
-            <ul>
-                {% for field, error_list in errors.items %}
-                    {% for error in error_list %}
-                        <li>{{ field }}: {{ error }}</li>
-                    {% endfor %}
-                {% endfor %}
-            </ul>
-        </div>
-    {% endif %}
     <form action="{% url 'edit-palette' object.pk %}" method="post">
         {% csrf_token %}
         {% for field in form %}
             <div>
-<!--                <label for="{{ field.id_for_label }}">-->
-<!--                    {{ field.label }}-->
-<!--                </label>-->
                 {{ field }}
                 {% if field.errors %}
-                    <p>{{ field.errors.as_text }}</p>
+                    <p class="form-error">{{ field.errors.as_text }}</p>
                 {% endif %}
             </div>
         {% endfor %}

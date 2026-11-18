@@ -1,42 +1,33 @@
-import random
 from django import forms
+from django.core.validators import RegexValidator
+
+from generate.colors import HEX_COLOR_RE, NUM_COLORS
+
+COLOR_FIELD_NAMES = [f'color{i}' for i in range(1, NUM_COLORS + 1)]
 
 
-def get_gradient_colors(num_colors=6, max_step=50):
-    def clamp(value) :
-        return max(0, min(255, value))
+class HexColorField(forms.CharField):
+    default_validators = [RegexValidator(HEX_COLOR_RE, 'Enter a colour in the form #rrggbb.')]
 
-    def rgb_to_hex(r, g, b) :
-        return f'#{r:02x}{g:02x}{b:02x}'
+    def __init__(self, **kwargs):
+        kwargs.setdefault('max_length', 7)
+        kwargs.setdefault('widget', forms.TextInput(attrs={'type': 'color'}))
+        super().__init__(**kwargs)
 
-    r = random.randint(0, 255)
-    g = random.randint(0, 255)
-    b = random.randint(0, 255)
+    def to_python(self, value):
+        return super().to_python(value).lower()
 
-    colors = [rgb_to_hex(r, g, b)]
 
-    for _ in range(num_colors - 1):
-        r = clamp(r + random.randint(-max_step, max_step))
-        g = clamp(g + random.randint(-max_step, max_step))
-        b = clamp(b + random.randint(-max_step, max_step))
-        colors.append(rgb_to_hex(r, g, b))
+class GradientForm(forms.Form):
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        for name in COLOR_FIELD_NAMES:
+            self.fields[name] = HexColorField()
 
-    return colors
+    @staticmethod
+    def initial_for(colors):
+        return dict(zip(COLOR_FIELD_NAMES, colors))
 
-class GradientForm(forms.Form) :
-    # DIRECTION_CHOICES = [
-    #     ('to right', 'To Right'),
-    #     ('to left', 'To Left'),
-    #     ('to bottom', 'To Bottom'),
-    #     ('to top', 'To Top'),
-    # ]
-
-    initial_colors = get_gradient_colors()
-    # direction = forms.ChoiceField(choices=DIRECTION_CHOICES, initial='to top')
-    color1 = forms.CharField(max_length=7, initial=initial_colors[0], widget=forms.TextInput(attrs={'type': 'color'}))
-    color2 = forms.CharField(max_length=7, initial=initial_colors[1], widget=forms.TextInput(attrs={'type': 'color'}))
-    color3 = forms.CharField(max_length=7, initial=initial_colors[2], widget=forms.TextInput(attrs={'type': 'color'}))
-    color4 = forms.CharField(max_length=7, initial=initial_colors[3], widget=forms.TextInput(attrs={'type': 'color'}))
-    color5 = forms.CharField(max_length=7, initial=initial_colors[4], widget=forms.TextInput(attrs={'type': 'color'}))
-    color6 = forms.CharField(max_length=7, initial=initial_colors[5], widget=forms.TextInput(attrs={'type': 'color'}))
-    random = forms.BooleanField(required=False, widget=forms.HiddenInput())
+    @property
+    def colors(self):
+        return [self.cleaned_data[name] for name in COLOR_FIELD_NAMES]
