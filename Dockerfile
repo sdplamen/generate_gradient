@@ -5,6 +5,14 @@ ENV PYTHONDONTWRITEBYTECODE=1 \
     PIP_NO_CACHE_DIR=1 \
     PIP_DISABLE_PIP_VERSION_CHECK=1
 
+# Pass with --build-arg VERSION=1.2 --build-arg REVISION=$(git rev-parse --short HEAD)
+ARG VERSION=dev
+ARG REVISION=unknown
+LABEL org.opencontainers.image.title="generate-gradient" \
+      org.opencontainers.image.version="${VERSION}" \
+      org.opencontainers.image.revision="${REVISION}" \
+      org.opencontainers.image.source="https://github.com/sdplamen/generate_gradient"
+
 WORKDIR /app
 
 COPY requirements.txt .
