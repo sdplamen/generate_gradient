@@ -11,7 +11,9 @@ https://docs.djangoproject.com/en/5.2/ref/settings/
 """
 
 from pathlib import Path
+from urllib.parse import parse_qsl, unquote, urlparse
 from decouple import config, Csv
+from django.core.exceptions import ImproperlyConfigured
 
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
 BASE_DIR = Path(__file__).resolve().parent.parent
@@ -107,12 +109,38 @@ WSGI_APPLICATION = 'generate_gradient.wsgi.application'
 # Database
 # https://docs.djangoproject.com/en/5.2/ref/settings/#databases
 
-DATABASES = {
-    'default': {
-        'ENGINE': 'django.db.backends.sqlite3',
-        'NAME': config('DB_PATH', default=str(BASE_DIR / 'gradient_generator_db')),
+# Set DATABASE_URL (postgres://user:password@host:5432/dbname, as Render shows it) to use Postgres;
+# without it the app uses the local SQLite file.
+DATABASE_URL = config('DATABASE_URL', default='')
+
+if DATABASE_URL:
+    db_url = urlparse(DATABASE_URL)
+    if db_url.scheme not in ('postgres', 'postgresql') or not db_url.hostname:
+        raise ImproperlyConfigured(
+            'DATABASE_URL must look like postgres://user:password@host:5432/dbname '
+            f'(got scheme {db_url.scheme or "none"!r}; check that it is not a file path).'
+        )
+    DATABASES = {
+        'default': {
+            'ENGINE': 'django.db.backends.postgresql',
+            'NAME': db_url.path.lstrip('/'),
+            'USER': unquote(db_url.username or ''),
+            'PASSWORD': unquote(db_url.password or ''),
+            'HOST': db_url.hostname,
+            'PORT': db_url.port or 5432,
+            # Extra settings from the URL, e.g. ?sslmode=require
+            'OPTIONS': dict(parse_qsl(db_url.query)),
+            'CONN_MAX_AGE': 600,
+            'CONN_HEALTH_CHECKS': True,
+        }
     }
-}
+else:
+    DATABASES = {
+        'default': {
+            'ENGINE': 'django.db.backends.sqlite3',
+            'NAME': config('DB_PATH', default=str(BASE_DIR / 'gradient_generator_db')),
+        }
+    }
 
 
 # Password validation

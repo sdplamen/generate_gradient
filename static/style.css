@@ -87,6 +87,7 @@ body {
 }
 
 .form-buttons button,
+.auth-form button,
 .saved-palettes summary,
 .nav-header .login-btn a,
 .nav-header li .nav-btn {
@@ -228,8 +229,47 @@ button:hover {
     color: #ffffcc;
 }
 
+/* Stack each field (label, input, help text) and center everything on the login and register pages */
+.login .auth-form, .register .auth-form {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 12px;
+}
+
 .login .form-group, .register .form-group {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 4px;
+    width: 100%;
+    max-width: 320px;
     padding: 5px;
+}
+
+.login .form-group input, .register .form-group input {
+    box-sizing: border-box;
+    width: 100%;
+    height: 32px;
+    padding: 0 8px;
+    border-radius: 6px;
+    border: 1px solid #f3f2f2;
+    font-family: inherit;
+}
+
+.register .helptext {
+    font-size: 0.75rem;
+    opacity: 0.85;
+}
+
+.register .helptext ul {
+    list-style: none;
+    margin: 0;
+    padding: 0;
+}
+
+.login .field-error, .register .field-error, .login .error-message, .register .error-message {
+    color: #ffb3b3;
 }
 .edit-palette a, .delete-palette a, .login a, .register a {
     text-decoration: none;
@@ -285,7 +325,10 @@ button:hover {
     max-height: 320px;
     overflow-y: auto;
     padding: 8px;
-    background-color: #001535;
+    /* #001535 at 20% opacity; the blur keeps the list readable over whatever is behind it */
+    background-color: rgba(0, 21, 53, 0.2);
+    -webkit-backdrop-filter: blur(6px);
+    backdrop-filter: blur(6px);
     border: 1px solid #f3f2f2;
     border-radius: 8px;
 }
