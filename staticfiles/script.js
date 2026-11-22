@@ -1,21 +1,3 @@
-document.addEventListener('DOMContentLoaded', () => {
-    const paletteLinks = document.querySelectorAll('.saved-palettes ul li a');
-    const palettes = [];
-    paletteLinks.forEach(link => {
-        if (link) {
-            const idMatch = link.textContent.match(/#(\d+)/);
-            const paletteId = idMatch ? parseInt(idMatch[1], 10) : null;
-            const paletteUrl = link.href;
-            palettes.push({
-                id: paletteId,
-                url: paletteUrl
-            });
-        }
-    });
-
-    console.log(palettes);
-});
-
 const randomColorBtn = document.getElementById('random-color-btn');
 const randomSavedBtn = document.getElementById('random-saved-btn');
 
