@@ -1,25 +1,32 @@
 {% extends "base.html" %}
 {% load static %}
 {% block content %}
-<header class="header-title">
-    <h2>Edit Palette</h2>
-    <p>Update the color scheme for<br>{{ object }}.</p>
-</header>
-<section>
-    <form action="{% url 'edit-palette' object.pk %}" method="post">
-        {% csrf_token %}
-        {% for field in form %}
-            <div>
-                {{ field }}
-                {% if field.errors %}
-                    <p class="form-error">{{ field.errors.as_text }}</p>
-                {% endif %}
+<section class="edit-palette-page">
+    <header class="header-title">
+        <h2>Edit Palette</h2>
+        <p>Update the color scheme for<br>{{ object }}.</p>
+    </header>
+    <div class="controls">
+        <form action="{% url 'edit-palette' object.pk %}" method="post" class="color-input-form">
+            {% csrf_token %}
+            <div class="color-fields">
+            {% for field in form %}
+                <div class="color-field">
+                    {{ field }}
+                    <div class="color-swatch" data-for="{{ field.id }}">
+                        <span class="color-value-text">{{ field.value }}</span>
+                    </div>
+                    {% if field.errors %}
+                        <p class="form-error">{{ field.errors.as_text }}</p>
+                    {% endif %}
+                </div>
+            {% endfor %}
             </div>
-        {% endfor %}
-        <div class="edit-palette">
-            <button><a href="{% url 'generate_gradient' %}">Cancel</a></button>
-            <button>Update</button>
-        </div>
-    </form>
+            <div class="form-buttons edit-palette">
+                <a class="button-link" href="{% url 'generate_gradient' %}">Cancel</a>
+                <button>Update</button>
+            </div>
+        </form>
+    </div>
 </section>
 {% endblock %}
