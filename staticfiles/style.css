@@ -175,6 +175,11 @@ button:hover {
     text-align: left;
 }
 
+/* Delete page shows the colors read-only */
+.controls .color-input-form input[type="color"]:disabled {
+    cursor: default;
+}
+
 /* Cancel is a link styled like the Update button */
 .form-buttons .button-link {
     box-sizing: border-box;
