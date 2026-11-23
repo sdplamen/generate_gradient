@@ -31,6 +31,9 @@ function isInteractiveTarget(target) {
 }
 
 document.addEventListener('touchstart', (event) => {
+    // A second finger restarts the timer as a two-finger press, so only one action fires
+    clearTimeout(pressTimer);
+    pressTimer = null;
     if (isInteractiveTarget(event.target)) return;
 
     longPressFired = false;
@@ -62,6 +65,16 @@ document.addEventListener('touchmove', (event) => {
         pressTimer = null;
     }
 }, { passive: true });
+
+// Lifting the finger before LONG_PRESS_MS makes it a normal tap, not a long press
+function cancelLongPress() {
+    clearTimeout(pressTimer);
+    pressTimer = null;
+}
+
+document.addEventListener('touchend', cancelLongPress, { passive: true });
+document.addEventListener('touchcancel', cancelLongPress, { passive: true });
+
 // Copy the generated CSS code to the clipboard
 document.addEventListener('DOMContentLoaded', () => {
     const copyBtn = document.getElementById('copy');
