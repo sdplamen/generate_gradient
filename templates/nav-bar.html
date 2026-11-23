@@ -30,6 +30,7 @@
                 {% csrf_token %}
                 <button class="nav-btn">Logout</button>
             </form>
+        </li>
         {% else %}
         <li class="login-btn"><a href="{% url 'login' %}">Login</a></li>
         <li class="login-btn"><a href="{% url 'register' %}">Register</a></li>

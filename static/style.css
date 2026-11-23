@@ -457,41 +457,38 @@ button:hover {
         justify-content: space-between;
     }
 
+    /* Nav buttons stay side by side; they share the row equally */
     .nav-header ul {
-        flex-direction: column;
-        gap: 5px;
-        align-items: stretch;
+        flex-wrap: wrap;
+        gap: 8px;
     }
 
-    .nav-header li,
-    .nav-header a,
-    .nav-header .nav-btn,
-    .nav-header form,
-    .login-info {
-        display: block;
-        padding: 5px 0;
+    .nav-header li:not(.visually-hidden-btn) {
+        flex: 1;
+        max-width: 160px;
+    }
+
+    /* "Log in to save palette" gets its own line above Login / Register */
+    .nav-header li:has(.login-info) {
+        flex-basis: 100%;
+        max-width: none;
+    }
+
+    .nav-header .login-info {
+        margin: 0;
         text-align: center;
-        font-size: 1.4rem;
     }
 
     .nav-header .login-btn a,
     .nav-header li .nav-btn {
-        display: flex;
         width: 100%;
-        font-size: 1rem;
+        min-width: 0;
     }
 
     /* no .visually-hidden-btn override — stays hidden */
 }
 
 @media (max-width: 600px) {
-    .nav-header li,
-    .nav-header a,
-    .nav-header .nav-btn,
-    .nav-header form,
-    .login-info {
-        padding: 2px 0;
-    }
 
     /* Share the row so both buttons stay side by side on phones */
     .form-buttons {
