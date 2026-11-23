@@ -105,6 +105,18 @@ class GradientPageTests(TestCase):
         self.assertEqual(self.client.post(reverse('delete-palette', args=[palette.id])).status_code, 404)
         self.assertTrue(ColorPalette.objects.filter(id=palette.id).exists())
 
+    def test_saved_palettes_are_numbered_from_one_oldest_first(self):
+        first = ColorPalette.objects.create(user=self.owner, colors=BLUES)
+        gone = ColorPalette.objects.create(user=self.owner, colors=REDS)
+        last = ColorPalette.objects.create(user=self.owner, colors=REDS)
+        gone.delete()
+        response = self.client.get(reverse('generate_gradient'))
+        self.assertEqual(list(response.context['saved_palettes']), [first, last])
+        self.assertContains(response, 'Palette 1</a>')
+        self.assertContains(response, 'Palette 2</a>')
+        self.assertNotContains(response, f'Palette {last.id}</a>')
+        self.assertEqual(last.number, 2)
+
 
 class GradientAPITests(TestCase):
     def test_get_returns_gradient(self):

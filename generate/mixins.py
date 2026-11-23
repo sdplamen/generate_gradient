@@ -11,7 +11,7 @@ class GradientContextMixin:
         colors = normalize_colors(colors) if colors else random_colors()
         gradient, css_code = build_gradient(colors)
 
-        saved_palettes_queryset = ColorPalette.objects.all().order_by('-created_at')
+        saved_palettes_queryset = ColorPalette.objects.all().order_by('id')
         paginator = Paginator(saved_palettes_queryset, self.paginate_by)
         page_obj = paginator.get_page(request.GET.get('page'))
 

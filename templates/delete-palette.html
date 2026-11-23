@@ -4,7 +4,7 @@
 <section class="edit-palette-page">
     <header class="header-title">
         <h2>Are you sure?</h2>
-        <p>You are about to delete<br>{{ object }}.<br>This action cannot be undone.</p>
+        <p>You are about to delete<br>Palette {{ object.number }} | Colors: {{ colors|join:", " }}.<br>This action cannot be undone.</p>
     </header>
     <div class="controls">
         <form action="{% url 'delete-palette' object.pk %}" method="post" class="color-input-form">

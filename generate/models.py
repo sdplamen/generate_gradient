@@ -13,5 +13,10 @@ class ColorPalette(models.Model):
         return f"Palette {self.id} | Colors: {color_preview[:50]}"
 
     @property
+    def number(self):
+        """Position in the Saved Palettes list (oldest = 1), shown instead of the database id."""
+        return ColorPalette.objects.filter(id__lte=self.id).count()
+
+    @property
     def name(self):
         return self.__str__()
