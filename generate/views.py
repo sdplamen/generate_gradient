@@ -70,6 +70,11 @@ class PaletteDeleteView(LoginRequiredMixin, DeleteView):
     def get_queryset(self):
         return self.model.objects.filter(user=self.request.user)
 
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        context['colors'] = normalize_colors(self.object.colors)
+        return context
+
 
 class PaletteUpdateView(LoginRequiredMixin, UpdateView) :
     model = ColorPalette
