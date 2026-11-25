@@ -139,9 +139,12 @@ document.addEventListener('DOMContentLoaded', () => {
         const label = swatch.querySelector('.color-value-text');
         if (!input || !label) return;
 
+        const lockBtn = swatch.querySelector('.lock-toggle');
+
         function updateLabel() {
             label.textContent = input.value;
             label.style.color = readableTextColor(input.value);
+            if (lockBtn) lockBtn.style.color = label.style.color;
         }
 
         updateLabel();
@@ -159,4 +162,77 @@ document.addEventListener('DOMContentLoaded', () => {
     setTimeout(() => {
         saveBtn.textContent = originalText;
     }, 1500);
+});
+
+// Lock colours: locked slots keep their colour when randomizing (Random Colors button, Space, long press)
+document.addEventListener('DOMContentLoaded', () => {
+    const lockInput = document.getElementById('lock-input');
+    const lockButtons = document.querySelectorAll('.lock-toggle');
+    if (!lockInput || !lockButtons.length) return;
+
+    function lockedSlots() {
+        return [...lockButtons]
+            .filter(btn => btn.getAttribute('aria-pressed') === 'true')
+            .map(btn => btn.dataset.slot);
+    }
+
+    function colorInput(slot) {
+        return document.querySelector(`.color-input-form input[name="color${slot}"]`);
+    }
+
+    // Keep the lock in the form and the address bar, so Update Gradient and reloads remember it
+    function syncLockState() {
+        const slots = lockedSlots();
+        lockInput.value = slots.join(',');
+        lockInput.disabled = slots.length === 0;
+
+        const url = new URL(window.location.href);
+        if (slots.length) {
+            url.searchParams.set('lock', slots.join(','));
+            slots.forEach(slot => url.searchParams.set(`color${slot}`, colorInput(slot).value));
+        } else {
+            url.searchParams.delete('lock');
+        }
+        history.replaceState(null, '', url);
+    }
+
+    lockButtons.forEach(btn => {
+        btn.addEventListener('click', () => {
+            const locked = btn.getAttribute('aria-pressed') === 'true';
+            btn.setAttribute('aria-pressed', String(!locked));
+            syncLockState();
+            btn.blur(); // so Space randomizes instead of toggling the lock again
+        });
+    });
+
+    // A colour picked after locking should be the one that stays
+    document.querySelectorAll('.color-input-form input[type="color"]').forEach(input => {
+        input.addEventListener('change', () => {
+            if (lockedSlots().length) syncLockState();
+        });
+    });
+
+    lockInput.disabled = lockedSlots().length === 0;
+
+    // Send the locked slots and their colours with the Random Colors request
+    const randomForm = document.getElementById('random-color-form');
+    if (!randomForm) return;
+
+    randomForm.addEventListener('submit', () => {
+        randomForm.querySelectorAll('.lock-field').forEach(el => el.remove());
+        const slots = lockedSlots();
+        if (!slots.length) return;
+
+        const fields = { lock: slots.join(',') };
+        slots.forEach(slot => { fields[`color${slot}`] = colorInput(slot).value; });
+
+        Object.entries(fields).forEach(([name, value]) => {
+            const hidden = document.createElement('input');
+            hidden.type = 'hidden';
+            hidden.className = 'lock-field';
+            hidden.name = name;
+            hidden.value = value;
+            randomForm.appendChild(hidden);
+        });
+    });
 });

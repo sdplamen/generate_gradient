@@ -4,7 +4,9 @@ from django.contrib.auth.models import User
 from django.test import TestCase
 from django.urls import reverse
 
-from generate.colors import HEX_COLOR_RE, NUM_COLORS, normalize_colors, random_colors, resize_colors
+from generate.colors import (
+    HEX_COLOR_RE, NUM_COLORS, _distance, _harmonious_colors, normalize_colors, random_colors, resize_colors,
+)
 from generate.forms import GradientForm
 from generate.models import ColorPalette
 
@@ -22,6 +24,26 @@ class ColorsTests(TestCase):
             colors = random_colors()
             self.assertEqual(len(colors), NUM_COLORS)
             self.assertTrue(all(HEX_COLOR_RE.match(color) for color in colors), colors)
+
+    def test_random_colors_keep_locked_slots(self):
+        for _ in range(50):
+            colors = random_colors(locked={0: '#123456', 3: '#abcdef'})
+            self.assertEqual((colors[0], colors[3]), ('#123456', '#abcdef'))
+            self.assertEqual(len(colors), NUM_COLORS)
+
+    def test_unlocked_colors_blend_into_locked_ones(self):
+        clashing = ['#00ff00'] * NUM_COLORS
+        smooth = ['#ee0000', '#dd0000', '#cc0000', '#bb0000', '#aa0000', '#990000']
+        with mock.patch('generate.colors._curated_colors', side_effect=[clashing, smooth] * 20), \
+                mock.patch('generate.colors.random.random', return_value=0), \
+                mock.patch('generate.colors.LOCK_SHORTLIST', 1):
+            colors = random_colors(locked={0: '#ff0000'})
+        self.assertEqual(colors, ['#ff0000'] + smooth[1:])
+
+    def test_harmonious_sweep_passes_close_to_the_anchor(self):
+        for _ in range(50):
+            colors = _harmonious_colors(NUM_COLORS, anchor=(2, '#1f6acd'))
+            self.assertLess(_distance(colors[2], '#1f6acd'), 60, colors)
 
     def test_resize_blends_short_lists_and_samples_long_ones(self):
         self.assertEqual(resize_colors(['#000000', '#ffffff'], 3), ['#000000', '#808080', '#ffffff'])
@@ -65,6 +87,25 @@ class GradientPageTests(TestCase):
     def test_invalid_query_colors_are_ignored(self):
         response = self.client.get(reverse('generate_gradient'), color_data(['red;'] * NUM_COLORS))
         self.assertEqual(response.status_code, 200)
+        self.assertNotContains(response, 'red;')
+
+    def test_random_keeps_locked_colors_and_marks_them_locked(self):
+        query = {'random': 'true', 'lock': '1,3', 'color1': '#123456', 'color3': '#ABCDEF'}
+        with mock.patch('generate.colors._curated_colors', return_value=list(BLUES)), \
+                mock.patch('generate.colors.random.random', return_value=0):
+            response = self.client.get(reverse('generate_gradient'), query)
+        expected = ['#123456', BLUES[1], '#abcdef'] + BLUES[3:]
+        self.assertEqual(response.context['colors'], expected)
+        self.assertEqual(response.context['locked_slots'], [1, 3])
+        html = response.content.decode()
+        self.assertRegex(html, r'data-slot="1"\s+aria-pressed="true"')
+        self.assertRegex(html, r'data-slot="2"\s+aria-pressed="false"')
+
+    def test_invalid_locks_are_ignored(self):
+        query = {'random': 'true', 'lock': '0,2,9,x', 'color2': 'red;'}
+        response = self.client.get(reverse('generate_gradient'), query)
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual(response.context['locked_slots'], [])
         self.assertNotContains(response, 'red;')
 
     def test_saving_requires_login(self):

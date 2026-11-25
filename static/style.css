@@ -515,3 +515,40 @@ button:hover {
         min-width: 0;
     }
 }
+/* Lock toggle on each colour: locked colours stay put when randomizing */
+.color-swatch .lock-toggle {
+    position: absolute;
+    top: -42px;
+    right: 10px;
+    width: 32px;
+    height: 32px;
+    padding: 0;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    background: transparent;
+    border: none;
+    border-radius: 50%;
+    color: inherit;
+    opacity: 0.55;
+}
+
+.color-swatch .lock-toggle:hover,
+.color-swatch .lock-toggle:focus-visible {
+    background: rgba(255, 255, 255, 0.2);
+    color: inherit;
+    opacity: 1;
+}
+
+.color-swatch .lock-toggle[aria-pressed="true"] {
+    opacity: 1;
+}
+
+.lock-toggle .shackle-locked,
+.lock-toggle[aria-pressed="true"] .shackle-unlocked {
+    display: none;
+}
+
+.lock-toggle[aria-pressed="true"] .shackle-locked {
+    display: inline;
+}

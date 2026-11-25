@@ -15,10 +15,20 @@
                     {{ field }}
                     <div class="color-swatch" data-for="{{ field.id }}">
                         <span class="color-value-text">{{ field.value }}</span>
+                        <button type="button" class="lock-toggle" data-slot="{{ forloop.counter }}"
+                                aria-pressed="{% if forloop.counter in locked_slots %}true{% else %}false{% endif %}"
+                                aria-label="Lock colour {{ forloop.counter }}" title="Lock this colour while randomizing">
+                            <svg viewBox="0 0 24 24" width="18" height="18" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                                <rect x="5" y="11" width="14" height="10" rx="2"/>
+                                <path class="shackle-locked" d="M8 11V7a4 4 0 0 1 8 0v4"/>
+                                <path class="shackle-unlocked" d="M8 11V7a4 4 0 0 1 7.5-2"/>
+                            </svg>
+                        </button>
                     </div>
                 </div>
             {% endfor %}
             </div>
+            <input type="hidden" name="lock" id="lock-input" value="{{ locked_slots|join:',' }}">
             <div class="form-buttons">
                 <button class="update">Update Gradient</button>
                 <button type="button" id="copy">Copy Code</button>

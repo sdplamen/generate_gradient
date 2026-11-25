@@ -49,14 +49,26 @@ def _curated_colors(size):
     return resize_colors(colors, size)
 
 
-def _harmonious_colors(size):
-    """Sweep a slice of the colour wheel while moving from dark to light, so neighbouring colours always match."""
+def _harmonious_colors(size, anchor=None):
+    """Sweep a slice of the colour wheel while moving from dark to light, so neighbouring colours always match.
+
+    `anchor` is an optional (slot index, colour) pair: the sweep is shifted so that slot gets close to that colour.
+    """
     hue = random.random()
-    hue_spread = random.uniform(0.08, 0.35)
+    hue_spread = random.uniform(0.08, 0.35) * random.choice((1, -1))
     saturation = random.uniform(0.45, 0.85)
     lightness = [random.uniform(0.25, 0.45), random.uniform(0.6, 0.8)]
     if random.random() < 0.5:
         lightness.reverse()
+
+    if anchor:
+        index, color = anchor
+        t = index / (size - 1)
+        anchor_hue, anchor_lightness, anchor_saturation = colorsys.rgb_to_hls(*(c / 255 for c in _to_rgb(color)))
+        hue = anchor_hue - hue_spread * t
+        saturation = min(anchor_saturation, 0.9)
+        shift = anchor_lightness - (lightness[0] + (lightness[1] - lightness[0]) * t)
+        lightness = [min(max(value + shift, 0.03), 0.97) for value in lightness]
 
     colors = []
     for i in range(size):
@@ -70,10 +82,55 @@ def _harmonious_colors(size):
     return colors
 
 
-def random_colors(size=NUM_COLORS):
+def _distance(color_a, color_b):
+    """Rough perceptual distance between two colours ("redmean" weighted RGB)."""
+    (r1, g1, b1), (r2, g2, b2) = _to_rgb(color_a), _to_rgb(color_b)
+    mean_red = (r1 + r2) / 2
+    return ((2 + mean_red / 256) * (r1 - r2) ** 2 + 4 * (g1 - g2) ** 2 + (2 + (255 - mean_red) / 256) * (b1 - b2) ** 2) ** 0.5
+
+
+def _lock_fit(colors, locked):
+    """How badly the locked colours clash with their neighbours (lower is better)."""
+    return sum(
+        _distance(colors[i], colors[i + 1])
+        for i in range(len(colors) - 1)
+        if i in locked or i + 1 in locked
+    )
+
+
+def _random_candidate(size, locked):
     if random.random() < CURATED_SHARE:
-        return _curated_colors(size)
-    return _harmonious_colors(size)
+        colors = _curated_colors(size)
+    else:
+        colors = _harmonious_colors(size, anchor=random.choice(list(locked.items())))
+    for index, color in locked.items():
+        colors[index] = color
+    return colors
+
+
+# With locked colours, try this many random palettes and pick one of the few that fit the locks best
+LOCK_CANDIDATES = 40
+LOCK_SHORTLIST = 5
+
+
+def random_colors(size=NUM_COLORS, locked=None):
+    """Random colours; `locked` maps slot index (0-based) to a colour that stays in that slot.
+
+    The other slots are chosen to blend into the locked colours: several random palettes are tried
+    (curated ones, and colour-wheel sweeps that pass through a locked colour) and one of the smoothest fits
+    is picked, so pressing Space again still gives something new.
+    """
+    locked = {index: color for index, color in (locked or {}).items() if 0 <= index < size}
+    if not locked:
+        return _curated_colors(size) if random.random() < CURATED_SHARE else _harmonious_colors(size)
+    if len(locked) == size:
+        return [locked[i] for i in range(size)]
+
+    candidates = sorted(
+        {tuple(_random_candidate(size, locked)) for _ in range(LOCK_CANDIDATES)},
+        key=lambda colors: _lock_fit(colors, locked),
+    )
+    return list(random.choice(candidates[:LOCK_SHORTLIST]))
 
 
 def normalize_colors(colors):
