@@ -730,3 +730,47 @@ button:hover {
         gap: 4px;
     }
 }
+
+/* Contrast check: sample headlines in white and black over the gradient */
+.gradient-box {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.contrast-check {
+    display: flex;
+    flex-direction: column;
+    gap: 1.5rem;
+    padding: 1rem;
+    text-align: center;
+}
+
+.contrast-sample {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 0.4rem;
+}
+
+.contrast-headline {
+    margin: 0;
+    font-size: clamp(1.5rem, 4vw, 2.5rem);
+    font-weight: 700;
+    line-height: 1.1;
+}
+
+/* A neutral chip so the ratio stays readable over any gradient */
+.contrast-ratio {
+    padding: 0.2rem 0.6rem;
+    border-radius: 999px;
+    background: rgba(20, 20, 20, 0.72);
+    color: #f3f2f2;
+    font-size: 0.8rem;
+    font-family: monospace;
+    white-space: nowrap;
+}
+
+.contrast-ratio[data-level="pass"]::before { content: "✓ "; color: #7ee08a; }
+.contrast-ratio[data-level="large"]::before { content: "◐ "; color: #f5c451; }
+.contrast-ratio[data-level="fail"]::before { content: "✗ "; color: #ff7b7b; }

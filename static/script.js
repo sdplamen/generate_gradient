@@ -181,23 +181,38 @@ document.addEventListener('DOMContentLoaded', () => {
     });
 });
 
+// "#rrggbb" -> [r, g, b] in 0–255
+function hexToRgb(hex) {
+    return [1, 3, 5].map(i => parseInt(hex.slice(i, i + 2), 16));
+}
+
+// WCAG relative luminance of an [r, g, b] color (0–255 channels)
+function rgbLuminance(rgb) {
+    const [r, g, b] = rgb.map(v => v / 255).map(c => (c <= 0.03928 ? c / 12.92 : ((c + 0.055) / 1.055) ** 2.4));
+    return 0.2126 * r + 0.7152 * g + 0.0722 * b;
+}
+
+// WCAG relative luminance of a "#rrggbb" color
+function luminance(hex) {
+    return rgbLuminance(hexToRgb(hex));
+}
+
+// WCAG contrast ratio between two luminances (1 to 21)
+function contrastRatio(lumA, lumB) {
+    const [lighter, darker] = lumA > lumB ? [lumA, lumB] : [lumB, lumA];
+    return (lighter + 0.05) / (darker + 0.05);
+}
+
 // Keep each hex label readable: dark text on light colors, light text on dark ones
 document.addEventListener('DOMContentLoaded', () => {
     const LIGHT_TEXT = '#f3f2f2';
     const DARK_TEXT = '#1a1a1a';
 
-    // WCAG relative luminance of a "#rrggbb" color
-    function luminance(hex) {
-        const channels = [1, 3, 5].map(i => parseInt(hex.slice(i, i + 2), 16) / 255);
-        const [r, g, b] = channels.map(c => (c <= 0.03928 ? c / 12.92 : ((c + 0.055) / 1.055) ** 2.4));
-        return 0.2126 * r + 0.7152 * g + 0.0722 * b;
-    }
-
     // Pick whichever text color gives the higher contrast ratio
     function readableTextColor(hex) {
         const bg = luminance(hex);
-        const contrastWithLight = (luminance(LIGHT_TEXT) + 0.05) / (bg + 0.05);
-        const contrastWithDark = (bg + 0.05) / (luminance(DARK_TEXT) + 0.05);
+        const contrastWithLight = contrastRatio(luminance(LIGHT_TEXT), bg);
+        const contrastWithDark = contrastRatio(luminance(DARK_TEXT), bg);
         return contrastWithDark > contrastWithLight ? DARK_TEXT : LIGHT_TEXT;
     }
 
@@ -311,4 +326,60 @@ document.addEventListener('DOMContentLoaded', () => {
             radio.form.requestSubmit();
         });
     });
+});
+
+// Contrast check: worst-case and best-case WCAG contrast of white and black text over the gradient
+document.addEventListener('DOMContentLoaded', () => {
+    const samples = document.querySelectorAll('.contrast-sample');
+    const colorInputs = document.querySelectorAll('.color-input-form input[type="color"]');
+    if (!samples.length || !colorInputs.length) return;
+
+    const STEPS_PER_SEGMENT = 24;
+
+    // Luminance at evenly spaced points along the gradient, blended in sRGB like the browser does
+    function gradientLuminances(colors) {
+        const rgbs = colors.map(hexToRgb);
+        if (rgbs.length === 1) return [rgbLuminance(rgbs[0])];
+
+        const lums = [];
+        for (let i = 0; i < rgbs.length - 1; i++) {
+            for (let step = 0; step <= STEPS_PER_SEGMENT; step++) {
+                const t = step / STEPS_PER_SEGMENT;
+                lums.push(rgbLuminance(rgbs[i].map((c, k) => c + (rgbs[i + 1][k] - c) * t)));
+            }
+        }
+        return lums;
+    }
+
+    // WCAG 2.x levels for the weakest spot of the gradient
+    function rating(ratio) {
+        if (ratio >= 7) return 'AAA';
+        if (ratio >= 4.5) return 'AA';
+        if (ratio >= 3) return 'AA large only';
+        return 'Fail';
+    }
+
+    function update() {
+        const lums = gradientLuminances([...colorInputs].map(input => input.value));
+
+        samples.forEach(sample => {
+            const textLum = luminance(sample.dataset.textColor);
+            const ratios = lums.map(lum => contrastRatio(textLum, lum));
+            const worst = Math.min(...ratios);
+            const best = Math.max(...ratios);
+            const level = rating(worst);
+
+            const badge = sample.querySelector('.contrast-ratio');
+            const range = worst.toFixed(2) === best.toFixed(2)
+                ? `${worst.toFixed(2)}:1`
+                : `${worst.toFixed(2)}–${best.toFixed(2)}:1`;
+            badge.textContent = `${range} · ${level}`;
+            badge.dataset.level = level === 'Fail' ? 'fail' : level === 'AA large only' ? 'large' : 'pass';
+            badge.title = `Lowest contrast over the gradient is ${worst.toFixed(2)}:1, highest ${best.toFixed(2)}:1. `
+                + 'AA needs 4.5:1 for normal text and 3:1 for large text; AAA needs 7:1.';
+        });
+    }
+
+    update();
+    colorInputs.forEach(input => input.addEventListener('input', update));
 });
