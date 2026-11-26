@@ -30,6 +30,9 @@ staticfiles/
 # Old / backup copies (history is in git)
 *.old.*
 
+# Claude
+.claude
+
 # IDEs / editors
 .idea/
 .vscode/

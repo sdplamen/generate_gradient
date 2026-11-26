@@ -203,10 +203,48 @@ class GradientPageTests(TestCase):
         gone.delete()
         response = self.client.get(reverse('generate_gradient'))
         self.assertEqual(list(response.context['saved_palettes']), [first, last])
-        self.assertContains(response, 'Palette 1</a>')
-        self.assertContains(response, 'Palette 2</a>')
-        self.assertNotContains(response, f'Palette {last.id}</a>')
+        self.assertContains(response, 'Palette 1</span>')
+        self.assertContains(response, 'Palette 2</span>')
+        self.assertNotContains(response, f'Palette {last.id}</span>')
         self.assertEqual(last.number, 2)
+
+    def test_save_palette_with_name(self):
+        self.client.force_login(self.owner)
+        self.client.post(reverse('generate_gradient'), {**color_data(BLUES[:3]), 'name': '  Ocean  '})
+        self.assertEqual(ColorPalette.objects.get().name, 'Ocean')
+
+    def test_save_palette_with_too_long_name_is_rejected(self):
+        self.client.force_login(self.owner)
+        response = self.client.post(reverse('generate_gradient'), {**color_data(BLUES[:3]), 'name': 'x' * 41}, follow=True)
+        self.assertContains(response, 'Palette not saved')
+        self.assertFalse(ColorPalette.objects.exists())
+
+    def test_named_palette_shows_its_name_others_their_number(self):
+        ColorPalette.objects.create(user=self.owner, colors=BLUES, name='Ocean <b>')
+        ColorPalette.objects.create(user=self.owner, colors=REDS)
+        response = self.client.get(reverse('generate_gradient'))
+        self.assertContains(response, 'Ocean &lt;b&gt;</span>')
+        self.assertContains(response, 'Palette 2</span>')
+        self.assertNotContains(response, 'Palette 1</span>')
+
+    def test_owner_can_rename_palette(self):
+        palette = ColorPalette.objects.create(user=self.owner, colors=BLUES, name='Old')
+        self.client.force_login(self.owner)
+        response = self.client.get(reverse('edit-palette', args=[palette.id]))
+        self.assertContains(response, 'value="Old"')
+        self.client.post(reverse('edit-palette', args=[palette.id]), {**color_data(REDS), 'name': 'New'})
+        palette.refresh_from_db()
+        self.assertEqual((palette.name, palette.colors), ('New', REDS))
+        self.client.post(reverse('edit-palette', args=[palette.id]), color_data(REDS))
+        palette.refresh_from_db()
+        self.assertEqual(palette.name, '')
+
+    def test_edit_page_renders_one_color_field_per_color(self):
+        palette = ColorPalette.objects.create(user=self.owner, colors=BLUES[:3])
+        self.client.force_login(self.owner)
+        response = self.client.get(reverse('edit-palette', args=[palette.id]))
+        self.assertContains(response, 'type="color"', count=3)
+        self.assertContains(response, 'Palette 1 | Colors')
 
 
 class GradientAPITests(TestCase):
@@ -219,3 +257,9 @@ class GradientAPITests(TestCase):
         self.client.force_login(User.objects.create_user('api', password='pass12345'))
         self.assertEqual(self.client.post(reverse('api_gradient'), color_data(['pink'] * NUM_COLORS)).status_code, 400)
         self.assertEqual(self.client.post(reverse('api_gradient'), color_data(BLUES)).status_code, 201)
+
+    def test_post_saves_name_and_get_lists_it(self):
+        self.client.force_login(User.objects.create_user('api', password='pass12345'))
+        self.client.post(reverse('api_gradient'), {**color_data(BLUES), 'name': 'Night'})
+        saved = self.client.get(reverse('api_gradient')).json()['saved_palettes']
+        self.assertEqual([palette['name'] for palette in saved], ['Night'])

@@ -16,7 +16,7 @@ from generate.colors import (
     DEFAULT_COLORS, DIRECTION, HEX_COLOR_RE, MAX_COLORS, MIN_COLORS, build_gradient, normalize_colors, random_colors,
     resize_colors,
 )
-from generate.forms import GradientForm
+from generate.forms import GradientForm, PaletteForm
 from generate.mixins import GradientContextMixin
 from generate.models import ColorPalette
 from generate.serializers import GradientSerializer
@@ -82,12 +82,12 @@ class GradientGeneratorView(View, GradientContextMixin):
         if not request.user.is_authenticated:
             return redirect('login')
 
-        form = GradientForm(request.POST)
+        form = PaletteForm(request.POST)
         if not form.is_valid():
-            messages.error(request, 'Palette not saved: the colours were not valid.')
+            messages.error(request, 'Palette not saved: the colours or name were not valid.')
             return redirect('generate_gradient')
 
-        ColorPalette.objects.create(user=request.user, colors=form.colors)
+        ColorPalette.objects.create(user=request.user, colors=form.colors, name=form.cleaned_data['name'])
         messages.success(request, 'Palette saved', extra_tags='palette-saved')
         return redirect(f'{reverse("generate_gradient")}?{urlencode(GradientForm.initial_for(form.colors))}')
 
@@ -117,7 +117,7 @@ class PaletteDeleteView(LoginRequiredMixin, DeleteView):
 
 class PaletteUpdateView(LoginRequiredMixin, UpdateView) :
     model = ColorPalette
-    form_class = GradientForm
+    form_class = PaletteForm
     template_name = 'edit-palette.html'
     success_url = reverse_lazy('generate_gradient')
 
@@ -127,6 +127,7 @@ class PaletteUpdateView(LoginRequiredMixin, UpdateView) :
     def get_initial(self) :
         initial = super().get_initial()
         initial.update(GradientForm.initial_for(normalize_colors(self.object.colors)))
+        initial['name'] = self.object.name
         return initial
 
     def get_form_kwargs(self) :
@@ -136,6 +137,7 @@ class PaletteUpdateView(LoginRequiredMixin, UpdateView) :
 
     def form_valid(self, form):
         self.object.colors = form.colors
+        self.object.name = form.cleaned_data['name']
         self.object.save()
         return redirect(self.get_success_url())
 
@@ -168,14 +170,14 @@ class GradientAPIView(APIView, GradientContextMixin):
 
         response_data = gradient_data(context['colors'])
         response_data['saved_palettes'] = [
-            {'id': palette.id, 'colors': palette.colors} for palette in context['saved_palettes']
+            {'id': palette.id, 'name': palette.name, 'colors': palette.colors} for palette in context['saved_palettes']
         ]
         return Response(response_data, status=status.HTTP_200_OK)
 
     def post(self, request):
-        form = GradientForm(request.data)
+        form = PaletteForm(request.data)
         if not form.is_valid():
             return Response(form.errors, status=status.HTTP_400_BAD_REQUEST)
 
-        ColorPalette.objects.create(user=request.user, colors=form.colors)
+        ColorPalette.objects.create(user=request.user, colors=form.colors, name=form.cleaned_data['name'])
         return Response(gradient_data(form.colors), status=status.HTTP_201_CREATED)

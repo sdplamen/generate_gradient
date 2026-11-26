@@ -56,7 +56,9 @@
                         <ul>
                             {% for palette in saved_palettes %}
                             <li {% if palette.id == active_palette_id %}class="active-palette"{% endif %}>
-                                <a href="{% url 'get_palette' palette_id=palette.id %}">Palette {{ saved_palettes.start_index|add:forloop.counter0 }}</a>
+                                <a class="palette-link" href="{% url 'get_palette' palette_id=palette.id %}">
+                                    <span class="palette-strip" style="background: {{ palette.preview_gradient }};" aria-hidden="true"></span>
+                                    <span class="palette-label">{% if palette.name %}{{ palette.name }}{% else %}Palette {{ saved_palettes.start_index|add:forloop.counter0 }}{% endif %}</span></a>
                                 {% if user.is_authenticated and palette.user == user %}
                                     <a href="{% url 'edit-palette' palette.id %}">Edit</a>
                                     <a href="{% url 'delete-palette' palette.id %}">Delete</a>

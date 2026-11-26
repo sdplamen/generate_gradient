@@ -4,13 +4,20 @@
 <section class="edit-palette-page">
     <header class="header-title">
         <h2>Edit Palette</h2>
-        <p>Update the color scheme for<br>Palette {{ object.number }} | Colors: {{ object.colors|join:", " }}.</p>
+        <p>Update the color scheme for<br>{{ object.display_name }} | Colors: {{ object.colors|join:", " }}.</p>
     </header>
     <div class="controls">
         <form action="{% url 'edit-palette' object.pk %}" method="post" class="color-input-form">
             {% csrf_token %}
+            <div class="palette-name-field">
+                <label for="{{ form.name.id_for_label }}">Name</label>
+                {{ form.name }}
+                {% if form.name.errors %}
+                    <p class="form-error">{{ form.name.errors.as_text }}</p>
+                {% endif %}
+            </div>
             <div class="color-fields">
-            {% for field in form %}
+            {% for field in form.color_fields %}
                 <div class="color-field">
                     {{ field }}
                     <div class="color-swatch" data-for="{{ field.id }}">

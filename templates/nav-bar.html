@@ -19,6 +19,7 @@
                 {% for color in colors %}
                     <input type="hidden" name="color{{ forloop.counter }}" value="{{ color }}">
                 {% endfor %}
+                <input type="text" name="name" maxlength="40" class="palette-name-input" placeholder="Name (optional)" aria-label="Palette name (optional)">
                 <button class="nav-btn" id="save-palette-btn"{% for message in messages %}{% if 'palette-saved' in message.tags %} data-saved="true"{% endif %}{% endfor %}>Save Palette</button>
             </form>
         {% else %}

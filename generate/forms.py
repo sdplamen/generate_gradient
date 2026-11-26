@@ -2,6 +2,7 @@ from django import forms
 from django.core.validators import RegexValidator
 
 from generate.colors import DEFAULT_COLORS, HEX_COLOR_RE, MAX_COLORS, clamp_count
+from generate.models import NAME_MAX_LENGTH
 
 COLOR_FIELD_NAMES = [f'color{i}' for i in range(1, MAX_COLORS + 1)]
 
@@ -48,3 +49,16 @@ class GradientForm(forms.Form):
     @property
     def colors(self):
         return [self.cleaned_data[name] for name in self.color_names]
+
+
+class PaletteForm(GradientForm):
+    """The colours of a palette to save or edit, plus an optional name."""
+
+    name = forms.CharField(
+        max_length=NAME_MAX_LENGTH, required=False,
+        widget=forms.TextInput(attrs={'placeholder': 'Name (optional)', 'class': 'palette-name-input'}),
+    )
+
+    @property
+    def color_fields(self):
+        return [self[name] for name in self.color_names]
