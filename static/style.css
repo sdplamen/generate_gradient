@@ -267,15 +267,13 @@ button:hover {
     gap: 8px;
 }
 
-/* The name box gives up space first; the Save button keeps its full size */
-.save-form-nav .palette-name-input {
-    flex: 0 1 160px;
-    min-width: 0;
-}
-
-.save-form-nav .nav-btn {
+/* The name box and Save button keep the nav buttons' size (140 x 30) at every screen width */
+.save-form-nav .palette-name-input,
+.nav-header li .save-form-nav .nav-btn {
     flex: none;
-    width: auto;
+    width: 140px;
+    min-width: 140px;
+    height: 30px;
 }
 
 .palette-name-input {
@@ -532,15 +530,14 @@ button:hover {
         justify-content: space-between;
     }
 
-    /* Nav buttons stay side by side; they share the row equally */
+    /* Nav buttons stay side by side and wrap onto a new row when they run out of room */
     .nav-header ul {
         flex-wrap: wrap;
         gap: 8px;
     }
 
     .nav-header li:not(.visually-hidden-btn) {
-        flex: 1;
-        max-width: 160px;
+        flex: none;
     }
 
     /* "Log in to save palette", or the name box and Save button, get their own line above the other buttons */
@@ -555,24 +552,15 @@ button:hover {
         text-align: center;
     }
 
+    /* Every nav button keeps the desktop size (140 x 30) on small screens too */
     .nav-header .login-btn a,
     .nav-header li .nav-btn {
-        width: 100%;
-        min-width: 0;
+        width: 140px;
+        min-width: 140px;
     }
 
     .save-form-nav {
         justify-content: center;
-    }
-
-    .save-form-nav .palette-name-input {
-        flex: 1 1 auto;
-        max-width: 240px;
-    }
-
-    .nav-header li .save-form-nav .nav-btn {
-        width: auto;
-        min-width: 120px;
     }
 
     /* no .visually-hidden-btn override — stays hidden */
