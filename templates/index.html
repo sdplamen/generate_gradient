@@ -6,18 +6,7 @@
     {% if message.level_tag == 'error' %}<p class="form-error">{{ message }}</p>{% endif %}
 {% endfor %}
 <section class="container">
-    <div class="gradient-box" style="{{ css_code }}">
-        <div class="contrast-check" aria-live="polite">
-            <div class="contrast-sample" data-text-color="#ffffff">
-                <p class="contrast-headline" style="color: #ffffff;">Sample headline</p>
-                <span class="contrast-ratio"></span>
-            </div>
-            <div class="contrast-sample" data-text-color="#000000">
-                <p class="contrast-headline" style="color: #000000;">Sample headline</p>
-                <span class="contrast-ratio"></span>
-            </div>
-        </div>
-    </div>
+    <div class="gradient-box" style="{{ css_code }}"></div>
     <div class="controls">
         <form method="GET" action="{% url 'generate_gradient' %}" class="color-input-form">
             <fieldset class="count-picker">
