@@ -1,10 +1,32 @@
 from django import forms
 from django.core.validators import RegexValidator
 
-from generate.colors import DEFAULT_COLORS, HEX_COLOR_RE, MAX_COLORS, clamp_count
+from generate.colors import (
+    DEFAULT_ANGLE, DEFAULT_COLORS, DEFAULT_TYPE, GRADIENT_TYPES, HEX_COLOR_RE, MAX_ANGLE, MAX_COLORS, clamp_count,
+)
 from generate.models import NAME_MAX_LENGTH
 
 COLOR_FIELD_NAMES = [f'color{i}' for i in range(1, MAX_COLORS + 1)]
+
+
+def style_from_query(query):
+    """(gradient type, angle) from ?type=linear|radial|conic&angle=0..360; missing or invalid values get the defaults."""
+    gradient_type = query.get('type', '')
+    if gradient_type not in GRADIENT_TYPES:
+        gradient_type = DEFAULT_TYPE
+    angle = query.get('angle', '')
+    angle = int(angle) if angle.isdigit() and int(angle) <= MAX_ANGLE else DEFAULT_ANGLE
+    return gradient_type, angle
+
+
+def style_params(gradient_type, angle):
+    """The query parameters for a gradient style, leaving out the defaults so plain URLs stay plain."""
+    params = {}
+    if gradient_type != DEFAULT_TYPE:
+        params['type'] = gradient_type
+    if angle != DEFAULT_ANGLE:
+        params['angle'] = angle
+    return params
 
 
 def count_color_fields(values):

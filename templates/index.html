@@ -18,6 +18,21 @@
                 </label>
                 {% endfor %}
             </fieldset>
+            <fieldset class="count-picker type-picker">
+                <legend>Type:</legend>
+                {% for type in gradient_types %}
+                <label>
+                    <input type="radio" name="type" value="{{ type }}"{% if type == gradient_type %} checked{% endif %}>
+                    <span>{{ type|capfirst }}</span>
+                </label>
+                {% endfor %}
+            </fieldset>
+            {# Hidden, not disabled, for radial gradients, so the angle is still sent and comes back when switching back #}
+            <div class="angle-control"{% if gradient_type == 'radial' %} hidden{% endif %}>
+                <label for="angle-input" id="angle-label">{% if gradient_type == 'conic' %}Start angle:{% else %}Angle:{% endif %}</label>
+                <input type="range" id="angle-input" name="angle" min="0" max="{{ max_angle }}" step="1" value="{{ angle }}">
+                <output for="angle-input" id="angle-value">{{ angle }}°</output>
+            </div>
             <div class="color-fields">
             {% for field in form %}
                 <div class="color-field">
@@ -56,7 +71,7 @@
                         <ul>
                             {% for palette in saved_palettes %}
                             <li {% if palette.id == active_palette_id %}class="active-palette"{% endif %}>
-                                <a class="palette-link" href="{% url 'get_palette' palette_id=palette.id %}">
+                                <a class="palette-link keeps-style" href="{% url 'get_palette' palette_id=palette.id %}{% if style_query %}?{{ style_query }}{% endif %}">
                                     <span class="palette-strip" style="background: {{ palette.preview_gradient }};" aria-hidden="true"></span>
                                     <span class="palette-label">{% if palette.name %}{{ palette.name }}{% else %}Palette {{ saved_palettes.start_index|add:forloop.counter0 }}{% endif %}</span></a>
                                 {% if user.is_authenticated and palette.user == user %}
@@ -71,10 +86,10 @@
                         {% if saved_palettes.has_other_pages %}
                         <div class="pagination">
                             {% if saved_palettes.has_previous %}
-                                <a href="?page={{ saved_palettes.previous_page_number }}">Previous</a>
+                                <a class="keeps-style" href="?page={{ saved_palettes.previous_page_number }}{% if style_query %}&{{ style_query }}{% endif %}">Previous</a>
                             {% endif %}
                             {% if saved_palettes.has_next %}
-                                <a href="?page={{ saved_palettes.next_page_number }}">Next</a>
+                                <a class="keeps-style" href="?page={{ saved_palettes.next_page_number }}{% if style_query %}&{{ style_query }}{% endif %}">Next</a>
                             {% endif %}
                         </div>
                         {% endif %}
@@ -84,7 +99,7 @@
         </form>
 
         <div class="css-code-container">
-            <textarea id="css-code-area" class="css-code" data-direction="{{ direction }}" readonly>{{ css_code }}</textarea>
+            <textarea id="css-code-area" class="css-code" readonly>{{ css_code }}</textarea>
         </div>
     </div>
 </section>

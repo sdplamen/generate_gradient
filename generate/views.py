@@ -10,7 +10,7 @@ from django.views import View
 from django.views.generic import UpdateView, DeleteView, CreateView
 from drf_spectacular.utils import OpenApiParameter, OpenApiResponse, extend_schema, inline_serializer
 from rest_framework import serializers, status
-from rest_framework.exceptions import NotAuthenticated
+from rest_framework.exceptions import NotAuthenticated, ValidationError
 from rest_framework.generics import ListAPIView
 from rest_framework.pagination import PageNumberPagination
 from rest_framework.permissions import AllowAny, IsAuthenticatedOrReadOnly
@@ -18,10 +18,10 @@ from rest_framework.renderers import BrowsableAPIRenderer, JSONRenderer
 from rest_framework.response import Response
 from rest_framework.views import APIView
 from generate.colors import (
-    DEFAULT_COLORS, DIRECTION, HEX_COLOR_RE, MAX_COLORS, MIN_COLORS, build_gradient, normalize_colors, random_colors,
+    DEFAULT_COLORS, DEFAULT_TYPE, DIRECTION, HEX_COLOR_RE, MAX_COLORS, MIN_COLORS, build_gradient, normalize_colors, random_colors,
     resize_colors,
 )
-from generate.forms import GradientForm, PaletteForm
+from generate.forms import GradientForm, PaletteForm, style_from_query, style_params
 from generate.mixins import GradientContextMixin
 from generate.models import NAME_MAX_LENGTH, ColorPalette
 from generate.renderers import CSSRenderer, SVGRenderer
@@ -96,17 +96,25 @@ class GradientGeneratorView(View, GradientContextMixin):
 
         ColorPalette.objects.create(user=request.user, colors=form.colors, name=form.cleaned_data['name'])
         messages.success(request, 'Palette saved', extra_tags='palette-saved')
-        return redirect(f'{reverse("generate_gradient")}?{urlencode(GradientForm.initial_for(form.colors))}')
+        query = {**GradientForm.initial_for(form.colors), **style_params(*style_from_query(request.POST))}
+        return redirect(f'{reverse("generate_gradient")}?{urlencode(query)}')
 
 
 generate_gradient = GradientGeneratorView.as_view()
 get_palette = GradientGeneratorView.as_view()
 
+
+def with_style(url, query):
+    """`url` with the gradient style (type and angle) from `query` added, if it is not the default one."""
+    params = style_params(*style_from_query(query))
+    return f'{url}?{urlencode(params)}' if params else url
+
+
 def get_saved_palette(request):
     all_palette_ids = list(ColorPalette.objects.values_list('id', flat=True))
     if not all_palette_ids:
-        return redirect('generate_gradient')
-    return redirect('get_palette', palette_id=random.choice(all_palette_ids))
+        return redirect(with_style(reverse('generate_gradient'), request.GET))
+    return redirect(with_style(reverse('get_palette', args=[random.choice(all_palette_ids)]), request.GET))
 
 class PaletteDeleteView(LoginRequiredMixin, DeleteView):
     model = ColorPalette
@@ -159,9 +167,10 @@ class RegisterView(CreateView):
         return response
 
 
-def gradient_data(colors, direction=DIRECTION):
-    gradient, css_code = build_gradient(colors, direction)
+def gradient_data(colors, direction=DIRECTION, gradient_type=DEFAULT_TYPE):
+    gradient, css_code = build_gradient(colors, direction, gradient_type)
     return GradientSerializer({
+        'type': gradient_type,
         'direction': direction,
         'colors': colors,
         'gradient': gradient,
@@ -196,15 +205,22 @@ class GradientAPIView(APIView):
 
     @extend_schema(
         parameters=[GradientQuerySerializer, *COLOR_PARAMETERS, *RANDOM_PARAMETERS, FORMAT_PARAMETER],
-        responses={200: GradientSerializer, 400: OpenApiResponse(description='Invalid direction or count.')},
+        responses={
+            200: GradientSerializer,
+            400: OpenApiResponse(description='Invalid type, direction or count, or a conic gradient asked for as SVG.'),
+        },
     )
     def get(self, request):
         query = GradientQuerySerializer(data=request.query_params)
         query.is_valid(raise_exception=True)
+        gradient_type = query.validated_data['type']
+        if gradient_type == 'conic' and request.accepted_renderer.format == 'svg':
+            raise ValidationError({'type': ['SVG has no conic gradients; ask for format=css or json instead.']})
 
         colors = colors_from_query(request.query_params)
         colors = normalize_colors(colors) if colors else random_colors()
-        return Response(gradient_data(colors, query.validated_data['direction']), status=status.HTTP_200_OK)
+        data = gradient_data(colors, query.validated_data['direction'], gradient_type)
+        return Response(data, status=status.HTTP_200_OK)
 
     @extend_schema(
         request=inline_serializer('PaletteCreate', {

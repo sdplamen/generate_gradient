@@ -4,8 +4,8 @@ Gradient Generator is a Django-based web application and REST API that allows us
 ## Features
 ### Web Interface:
 - Interactive gradient preview with a side-by-side layout (gradient box on the left, controls on the right).
-- Supports six color inputs for creating complex gradients.
-- Allows selection of gradient direction (to right, to left, to bottom, to top).
+- Supports two to six color inputs for creating complex gradients.
+- Linear, radial and conic gradients, with an angle slider (0–360°) for linear and conic ones. The preview follows the controls live, and the style is kept in the URL (`?type=conic&angle=45`).
 - Option to generate random colors for quick experimentation.
 - Displays the generated CSS code for manual copying.
 - Fully server-side, no JavaScript required.
@@ -28,7 +28,7 @@ Setup
 - Access: http://127.0.0.1:8000/gradient/
 ### Features:
 - Use the color pickers to select up to six colors.
-- Choose a gradient direction from the dropdown.
+- Pick Linear, Radial or Conic, and drag the angle slider (linear and conic).
 - Click "Random Colors" to generate a new random gradient.
 - Click "Update Gradient" to apply custom selections.
 - Copy the CSS code from the textarea manually.
@@ -36,13 +36,14 @@ Setup
 ### REST API
 #### GET /api/gradient/
 Returns one gradient (JSON by default). Query parameters:
-  - direction: `to top`, `to right`, `to bottom`, `to left`, a corner such as `to top right`, or an angle from `-360deg` to `360deg`. Default: `to top`.
+  - type: `linear` (default), `radial` or `conic`.
+  - direction: `to top`, `to right`, `to bottom`, `to left`, a corner such as `to top right`, or an angle from `-360deg` to `360deg`. Default: `to top`. For conic gradients it is the start angle; radial ones ignore it.
   - count: number of colours, 2–6. Given colours are blended or sampled to that many.
   - color1 to color6: Hex color codes (e.g., #ff0000). Defaults to random colors if not provided.
   - random: Set to true to generate random colors (ignores color1 to color6, except slots kept with `lock=1,3`).
-  - format: `json` (default), `css` (the CSS declaration as `text/css`) or `svg` (a 400×400 SVG image). An `Accept` header works too.
+  - format: `json` (default), `css` (the CSS declaration as `text/css`) or `svg` (a 400×400 SVG image; not for conic gradients, which SVG cannot draw). An `Accept` header works too.
 
-An invalid `direction` or `count` returns 400 with the error as JSON.
+An invalid `type`, `direction` or `count` returns 400 with the error as JSON.
 
 #### POST /api/gradient/
 Saves `color1`…`colorN` (and an optional `name`) as a palette. Requires login, and is limited per user

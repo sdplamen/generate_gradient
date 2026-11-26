@@ -730,3 +730,75 @@ button:hover {
         gap: 4px;
     }
 }
+
+/* Angle slider for linear and conic gradients (hidden for radial ones) */
+.angle-control {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    margin: 0 0 12px;
+    color: antiquewhite;
+    font-size: 0.9rem;
+    font-weight: 500;
+}
+
+.angle-control[hidden] {
+    display: none;
+}
+
+.angle-control label {
+    flex: none;
+}
+
+.angle-control output {
+    flex: none;
+    min-width: 3.2em;
+    text-align: right;
+    font-variant-numeric: tabular-nums;
+}
+
+/* Undo the full-width colour-input styling, then draw the track and thumb */
+.controls .color-input-form .angle-control input[type="range"] {
+    flex: 1;
+    min-width: 0;
+    height: 24px;
+    margin: 0;
+    background: transparent;
+    cursor: pointer;
+}
+
+.angle-control input[type="range"]::-webkit-slider-runnable-track {
+    height: 4px;
+    border-radius: 2px;
+    background: rgba(243, 242, 242, 0.45);
+}
+
+.angle-control input[type="range"]::-moz-range-track {
+    height: 4px;
+    border-radius: 2px;
+    background: rgba(243, 242, 242, 0.45);
+}
+
+.angle-control input[type="range"]::-webkit-slider-thumb {
+    -webkit-appearance: none;
+    width: 18px;
+    height: 18px;
+    margin-top: -7px;
+    border: 2px solid #205067;
+    border-radius: 50%;
+    background: #f3f2f2;
+}
+
+.angle-control input[type="range"]::-moz-range-thumb {
+    width: 14px;
+    height: 14px;
+    border: 2px solid #205067;
+    border-radius: 50%;
+    background: #f3f2f2;
+}
+
+.angle-control input[type="range"]:focus-visible {
+    outline: 2px solid #f3f2f2;
+    outline-offset: 4px;
+    border-radius: 4px;
+}

@@ -34,7 +34,10 @@ class CSSRenderer(BaseRenderer):
 
 
 class SVGRenderer(BaseRenderer):
-    """A square SVG image of the gradient, drawn the way CSS draws it in a square box."""
+    """A square SVG image of a linear or radial gradient, drawn the way CSS draws it in a square box.
+
+    SVG has no conic gradients; the view turns those away before they get here.
+    """
 
     media_type = 'image/svg+xml'
     format = 'svg'
@@ -45,11 +48,18 @@ class SVGRenderer(BaseRenderer):
         if error is not None:
             return error
 
-        # CSS runs the gradient line through the centre, long enough that the corners get the first and last colour
-        angle = math.radians(direction_angle(data['direction']))
-        dx, dy = math.sin(angle), -math.cos(angle)
-        half = (abs(dx) + abs(dy)) / 2
-        x1, y1, x2, y2 = (round(value, 4) for value in (0.5 - dx * half, 0.5 - dy * half, 0.5 + dx * half, 0.5 + dy * half))
+        if data['type'] == 'radial':
+            # CSS "circle" reaches the farthest corner: half the diagonal of the square
+            element = 'radialGradient'
+            attributes = f'cx="0.5" cy="0.5" r="{round(math.sqrt(0.5), 4)}"'
+        else:
+            # CSS runs the gradient line through the centre, long enough that the corners get the first and last colour
+            angle = math.radians(direction_angle(data['direction']))
+            dx, dy = math.sin(angle), -math.cos(angle)
+            half = (abs(dx) + abs(dy)) / 2
+            x1, y1, x2, y2 = (round(value, 4) for value in (0.5 - dx * half, 0.5 - dy * half, 0.5 + dx * half, 0.5 + dy * half))
+            element = 'linearGradient'
+            attributes = f'x1="{x1}" y1="{y1}" x2="{x2}" y2="{y2}"'
 
         colors = data['colors']
         stops = '\n'.join(
@@ -59,7 +69,7 @@ class SVGRenderer(BaseRenderer):
         return (
             f'<svg xmlns="http://www.w3.org/2000/svg" width="{SVG_SIZE}" height="{SVG_SIZE}" '
             f'viewBox="0 0 {SVG_SIZE} {SVG_SIZE}">\n'
-            f'  <linearGradient id="gradient" x1="{x1}" y1="{y1}" x2="{x2}" y2="{y2}">\n{stops}\n  </linearGradient>\n'
+            f'  <{element} id="gradient" {attributes}>\n{stops}\n  </{element}>\n'
             f'  <rect width="100%" height="100%" fill="url(#gradient)"/>\n'
             f'</svg>\n'
         ).encode()

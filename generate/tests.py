@@ -6,10 +6,10 @@ from django.test import TestCase
 from django.urls import reverse
 
 from generate.colors import (
-    DEFAULT_COLORS, HEX_COLOR_RE, MAX_COLORS, MIN_COLORS, _distance, _harmonious_colors, normalize_colors,
-    parse_direction, random_colors, resize_colors,
+    DEFAULT_COLORS, HEX_COLOR_RE, MAX_COLORS, MIN_COLORS, _distance, _harmonious_colors, build_gradient,
+    normalize_colors, parse_direction, random_colors, resize_colors,
 )
-from generate.forms import GradientForm
+from generate.forms import GradientForm, style_from_query
 from generate.models import ColorPalette
 from generate.throttles import PaletteCreateThrottle
 
@@ -99,7 +99,7 @@ class GradientPageTests(TestCase):
 
     def test_valid_query_colors_are_shown(self):
         response = self.client.get(reverse('generate_gradient'), color_data(BLUES))
-        self.assertContains(response, f'linear-gradient(to top, {", ".join(BLUES)})')
+        self.assertContains(response, f'linear-gradient(0deg, {", ".join(BLUES)})')
 
     def test_first_visit_gets_default_count(self):
         response = self.client.get(reverse('generate_gradient'))
@@ -178,7 +178,7 @@ class GradientPageTests(TestCase):
     def test_saved_palette_with_fewer_colors_is_shown(self):
         palette = ColorPalette.objects.create(user=self.owner, colors=['#111111', '#222222'])
         response = self.client.get(reverse('get_palette', args=[palette.id]))
-        self.assertContains(response, 'linear-gradient(to top, #111111, #222222)')
+        self.assertContains(response, 'linear-gradient(0deg, #111111, #222222)')
 
     def test_save_palette_with_three_colors(self):
         self.client.force_login(self.owner)
@@ -250,6 +250,73 @@ class GradientPageTests(TestCase):
         self.assertContains(response, 'Palette 1 | Colors')
 
 
+class GradientStyleTests(TestCase):
+    """Gradient type (linear, radial, conic) and angle on the web page."""
+
+    def setUp(self):
+        self.owner = User.objects.create_user('owner', password='pass12345')
+
+    def test_build_gradient_for_each_type(self):
+        colors = ['#000000', '#ffffff']
+        self.assertEqual(build_gradient(colors, '45deg')[0], 'linear-gradient(45deg, #000000, #ffffff)')
+        self.assertEqual(build_gradient(colors, '45deg', 'radial')[0], 'radial-gradient(circle, #000000, #ffffff)')
+        self.assertEqual(build_gradient(colors, '45deg', 'conic')[0],
+                         'conic-gradient(from 45deg, #000000, #ffffff, #000000)')
+        self.assertEqual(build_gradient(colors, 'to right', 'conic')[0],
+                         'conic-gradient(from 90deg, #000000, #ffffff, #000000)')
+
+    def test_style_from_query_falls_back_to_defaults(self):
+        self.assertEqual(style_from_query({'type': 'conic', 'angle': '360'}), ('conic', 360))
+        for query in [{}, {'type': 'diamond', 'angle': '361'}, {'type': 'Radial', 'angle': '-5'}, {'angle': '4.5'}]:
+            self.assertEqual(style_from_query(query), ('linear', 0), query)
+
+    def test_page_uses_type_and_angle(self):
+        query = {**color_data(BLUES[:2]), 'type': 'conic', 'angle': '90'}
+        response = self.client.get(reverse('generate_gradient'), query)
+        self.assertContains(response, f'conic-gradient(from 90deg, {BLUES[0]}, {BLUES[1]}, {BLUES[0]})')
+        html = response.content.decode()
+        self.assertRegex(html, r'name="type" value="conic" checked')
+        self.assertRegex(html, r'id="angle-input" name="angle"[^>]*value="90"')
+        self.assertIn('Start angle:', html)
+
+        response = self.client.get(reverse('generate_gradient'), {**color_data(BLUES[:2]), 'angle': '135'})
+        self.assertContains(response, f'linear-gradient(135deg, {BLUES[0]}, {BLUES[1]})')
+
+    def test_radial_hides_the_angle_but_keeps_it(self):
+        response = self.client.get(reverse('generate_gradient'), {**color_data(BLUES[:2]), 'type': 'radial', 'angle': '30'})
+        self.assertContains(response, f'radial-gradient(circle, {BLUES[0]}, {BLUES[1]})')
+        self.assertContains(response, '<div class="angle-control" hidden>')
+        self.assertRegex(response.content.decode(), r'id="angle-input" name="angle"[^>]*value="30"')
+
+    def test_links_and_nav_forms_keep_the_style(self):
+        palette = ColorPalette.objects.create(user=self.owner, colors=BLUES)
+        self.client.force_login(self.owner)
+        response = self.client.get(reverse('generate_gradient'), {'type': 'radial', 'angle': '30'})
+        self.assertContains(response, f'href="{reverse("get_palette", args=[palette.id])}?type=radial&amp;angle=30"')
+        # Random Colors, Random Saved Palettes and Save Palette
+        self.assertContains(response, 'class="style-field" name="type" value="radial"', count=3)
+        self.assertContains(response, 'class="style-field" name="angle" value="30"', count=3)
+
+    def test_default_style_adds_nothing_to_links(self):
+        palette = ColorPalette.objects.create(user=self.owner, colors=BLUES)
+        response = self.client.get(reverse('generate_gradient'))
+        self.assertContains(response, f'href="{reverse("get_palette", args=[palette.id])}"')
+
+    def test_saving_keeps_the_style(self):
+        self.client.force_login(self.owner)
+        response = self.client.post(reverse('generate_gradient'), {**color_data(BLUES[:2]), 'type': 'conic', 'angle': '45'})
+        self.assertIn('type=conic&angle=45', response.url)
+        self.assertEqual(ColorPalette.objects.get().colors, BLUES[:2])
+
+    def test_random_saved_palette_keeps_the_style(self):
+        palette = ColorPalette.objects.create(user=self.owner, colors=BLUES)
+        response = self.client.get(reverse('get_saved_palette'), {'type': 'radial', 'angle': '0'})
+        self.assertRedirects(response, f'{reverse("get_palette", args=[palette.id])}?type=radial',
+                             fetch_redirect_response=False)
+        response = self.client.get(reverse('get_saved_palette'))
+        self.assertRedirects(response, reverse('get_palette', args=[palette.id]), fetch_redirect_response=False)
+
+
 class DirectionTests(TestCase):
     def test_parse_direction_accepts_keywords_and_angles(self):
         self.assertEqual(parse_direction('to right'), 'to right')
@@ -318,6 +385,31 @@ class GradientAPITests(TestCase):
         response = self.client.get(reverse('api_gradient'), {'direction': 'nope', 'format': 'css'})
         self.assertEqual((response.status_code, response['Content-Type']), (400, 'application/json'))
         self.assertIn('direction', response.json())
+
+    def test_type_parameter(self):
+        query = color_data(BLUES[:2])
+        data = self.client.get(reverse('api_gradient'), query).json()
+        self.assertEqual(data['type'], 'linear')
+        data = self.client.get(reverse('api_gradient'), {**query, 'type': 'radial'}).json()
+        self.assertEqual((data['type'], data['gradient']), ('radial', f'radial-gradient(circle, {BLUES[0]}, {BLUES[1]})'))
+        data = self.client.get(reverse('api_gradient'), {**query, 'type': 'conic', 'direction': 'to bottom'}).json()
+        self.assertEqual(data['gradient'], f'conic-gradient(from 180deg, {BLUES[0]}, {BLUES[1]}, {BLUES[0]})')
+        response = self.client.get(reverse('api_gradient'), {**query, 'type': 'conic', 'format': 'css'})
+        self.assertEqual(response.content.decode(),
+                         f'background: conic-gradient(from 0deg, {BLUES[0]}, {BLUES[1]}, {BLUES[0]});\n')
+
+    def test_invalid_type_is_rejected(self):
+        response = self.client.get(reverse('api_gradient'), {'type': 'diamond'})
+        self.assertEqual(response.status_code, 400)
+        self.assertIn('type', response.json())
+
+    def test_svg_for_radial_and_not_for_conic(self):
+        svg = self.client.get(reverse('api_gradient'), {'type': 'radial', 'format': 'svg'}).content.decode()
+        self.assertIn('<radialGradient id="gradient" cx="0.5" cy="0.5" r="0.7071">', svg)
+        self.assertIn('</radialGradient>', svg)
+        response = self.client.get(reverse('api_gradient'), {'type': 'conic', 'format': 'svg'})
+        self.assertEqual((response.status_code, response['Content-Type']), (400, 'application/json'))
+        self.assertIn('type', response.json())
 
     def test_unknown_format_is_not_found(self):
         self.assertEqual(self.client.get(reverse('api_gradient'), {'format': 'png'}).status_code, 404)

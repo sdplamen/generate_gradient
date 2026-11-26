@@ -20,6 +20,12 @@ DIRECTION_ANGLES = {
 DIRECTIONS = tuple(DIRECTION_ANGLES)
 ANGLE_RE = re.compile(r'^(-?\d{1,3})deg$')
 
+GRADIENT_TYPES = ('linear', 'radial', 'conic')
+DEFAULT_TYPE = 'linear'
+# The web page's angle slider runs from 0 to 360 degrees; 0 points up, like DIRECTION
+MAX_ANGLE = 360
+DEFAULT_ANGLE = 0
+
 # Share of random gradients taken from the curated palettes; the rest are generated on the colour wheel
 CURATED_SHARE = 0.7
 
@@ -186,6 +192,17 @@ def direction_angle(direction):
     return int(direction.removesuffix('deg'))
 
 
-def build_gradient(colors, direction=DIRECTION):
-    gradient = f'linear-gradient({direction}, {", ".join(colors)})'
+def build_gradient(colors, direction=DIRECTION, gradient_type=DEFAULT_TYPE):
+    """The CSS gradient and its `background:` declaration.
+
+    `direction` is one returned by parse_direction. Radial gradients ignore it (they spread out from the centre);
+    conic ones start at its angle and end on the first colour again, so the sweep has no hard seam.
+    """
+    stops = ', '.join(colors)
+    if gradient_type == 'radial':
+        gradient = f'radial-gradient(circle, {stops})'
+    elif gradient_type == 'conic':
+        gradient = f'conic-gradient(from {direction_angle(direction)}deg, {stops}, {colors[0]})'
+    else:
+        gradient = f'linear-gradient({direction}, {stops})'
     return gradient, f'background: {gradient};'
