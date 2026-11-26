@@ -267,6 +267,17 @@ button:hover {
     gap: 8px;
 }
 
+/* The name box gives up space first; the Save button keeps its full size */
+.save-form-nav .palette-name-input {
+    flex: 0 1 160px;
+    min-width: 0;
+}
+
+.save-form-nav .nav-btn {
+    flex: none;
+    width: auto;
+}
+
 .palette-name-input {
     box-sizing: border-box;
     height: 30px;
@@ -532,8 +543,9 @@ button:hover {
         max-width: 160px;
     }
 
-    /* "Log in to save palette" gets its own line above Login / Register */
-    .nav-header li:has(.login-info) {
+    /* "Log in to save palette", or the name box and Save button, get their own line above the other buttons */
+    .nav-header li:has(.login-info),
+    .nav-header li:has(.save-form-nav) {
         flex-basis: 100%;
         max-width: none;
     }
@@ -547,6 +559,20 @@ button:hover {
     .nav-header li .nav-btn {
         width: 100%;
         min-width: 0;
+    }
+
+    .save-form-nav {
+        justify-content: center;
+    }
+
+    .save-form-nav .palette-name-input {
+        flex: 1 1 auto;
+        max-width: 240px;
+    }
+
+    .nav-header li .save-form-nav .nav-btn {
+        width: auto;
+        min-width: 120px;
     }
 
     /* no .visually-hidden-btn override — stays hidden */
