@@ -9,30 +9,6 @@
     <div class="gradient-box" style="{{ css_code }}"></div>
     <div class="controls">
         <form method="GET" action="{% url 'generate_gradient' %}" class="color-input-form">
-            <fieldset class="count-picker">
-                <legend>Number of colours:</legend>
-                {% for count in color_counts %}
-                <label>
-                    <input type="radio" name="count" value="{{ count }}"{% if count == colors|length %} checked{% endif %}>
-                    <span>{{ count }}</span>
-                </label>
-                {% endfor %}
-            </fieldset>
-            <fieldset class="count-picker type-picker">
-                <legend>Type:</legend>
-                {% for type in gradient_types %}
-                <label>
-                    <input type="radio" name="type" value="{{ type }}"{% if type == gradient_type %} checked{% endif %}>
-                    <span>{{ type|capfirst }}</span>
-                </label>
-                {% endfor %}
-            </fieldset>
-            {# Hidden, not disabled, for radial gradients, so the angle is still sent and comes back when switching back #}
-            <div class="angle-control"{% if gradient_type == 'radial' %} hidden{% endif %}>
-                <label for="angle-input" id="angle-label">{% if gradient_type == 'conic' %}Start angle:{% else %}Angle:{% endif %}</label>
-                <input type="range" id="angle-input" name="angle" min="0" max="{{ max_angle }}" step="1" value="{{ angle }}">
-                <output for="angle-input" id="angle-value">{{ angle }}°</output>
-            </div>
             <div class="color-fields">
             {% for field in form %}
                 <div class="color-field">
@@ -51,6 +27,32 @@
                     </div>
                 </div>
             {% endfor %}
+            </div>
+            <div class="gradient-settings">
+                <fieldset class="count-picker">
+                    <legend>Number of colours:</legend>
+                    {% for count in color_counts %}
+                    <label>
+                        <input type="radio" name="count" value="{{ count }}"{% if count == colors|length %} checked{% endif %}>
+                        <span>{{ count }}</span>
+                    </label>
+                    {% endfor %}
+                </fieldset>
+                <fieldset class="count-picker type-picker">
+                    <legend>Gradient Type:</legend>
+                    {% for type in gradient_types %}
+                    <label>
+                        <input type="radio" name="type" value="{{ type }}"{% if type == gradient_type %} checked{% endif %}>
+                        <span>{{ type|capfirst }}</span>
+                    </label>
+                    {% endfor %}
+                </fieldset>
+                {# Hidden, not disabled, for radial gradients, so the angle is still sent and comes back when switching back #}
+                <div class="angle-control"{% if gradient_type == 'radial' %} hidden{% endif %}>
+                    <label for="angle-input" id="angle-label">{% if gradient_type == 'conic' %}Gradient Start Angle:{% else %}Gradient Angle:{% endif %}</label>
+                    <input type="range" id="angle-input" name="angle" min="0" max="{{ max_angle }}" step="1" value="{{ angle }}">
+                    <output for="angle-input" id="angle-value">{{ angle }}°</output>
+                </div>
             </div>
             <input type="hidden" name="lock" id="lock-input" value="{{ locked_slots|join:',' }}">
             <div class="form-buttons">

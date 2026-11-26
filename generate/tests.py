@@ -277,7 +277,7 @@ class GradientStyleTests(TestCase):
         html = response.content.decode()
         self.assertRegex(html, r'name="type" value="conic" checked')
         self.assertRegex(html, r'id="angle-input" name="angle"[^>]*value="90"')
-        self.assertIn('Start angle:', html)
+        self.assertIn('Gradient Start Angle:', html)
 
         response = self.client.get(reverse('generate_gradient'), {**color_data(BLUES[:2]), 'angle': '135'})
         self.assertContains(response, f'linear-gradient(135deg, {BLUES[0]}, {BLUES[1]})')

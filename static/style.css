@@ -802,3 +802,12 @@ button:hover {
     outline-offset: 4px;
     border-radius: 4px;
 }
+
+/* Number of colours, Gradient Type and Gradient Angle sit between the colours and the buttons */
+.gradient-settings {
+    margin-top: 15px;
+}
+
+.gradient-settings > :last-child {
+    margin-bottom: 0;
+}

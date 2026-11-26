@@ -375,7 +375,7 @@ document.addEventListener('DOMContentLoaded', () => {
         box.style.background = gradientCss(gradient);
 
         angleValue.textContent = `${gradient.angle}°`;
-        angleLabel.textContent = gradient.type === 'conic' ? 'Start angle:' : 'Angle:';
+        angleLabel.textContent = gradient.type === 'conic' ? 'Gradient Start Angle:' : 'Gradient Angle:';
         angleControl.hidden = gradient.type === 'radial';
 
         // Random Colors, Random Saved Palettes and Save Palette send the style along
