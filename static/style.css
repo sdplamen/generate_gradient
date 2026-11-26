@@ -552,3 +552,42 @@ button:hover {
 .lock-toggle[aria-pressed="true"] .shackle-locked {
     display: inline;
 }
+
+/* Colour count picker: a row of radio buttons, 2 to 6 */
+.count-picker {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 6px 16px;
+    margin: 0 0 12px;
+    padding: 0;
+    border: none;
+    color: antiquewhite;
+    font-size: 0.9rem;
+    font-weight: 500;
+}
+
+.count-picker legend {
+    float: left;
+    margin-right: 4px;
+    padding: 0;
+}
+
+.count-picker label {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    cursor: pointer;
+}
+
+/* Undo the full-width colour-input styling for the radios */
+.controls .color-input-form .count-picker input[type="radio"] {
+    width: 16px;
+    height: 16px;
+    margin: 0;
+    -webkit-appearance: radio;
+    -moz-appearance: radio;
+    appearance: auto;
+    accent-color: #f3f2f2;
+    cursor: pointer;
+}

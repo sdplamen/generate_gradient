@@ -236,3 +236,12 @@ document.addEventListener('DOMContentLoaded', () => {
         });
     });
 });
+
+// Colour count picker: picking 2–6 reloads with the current colours blended or sampled to that many
+document.addEventListener('DOMContentLoaded', () => {
+    document.querySelectorAll('.count-picker input[name="count"]').forEach(radio => {
+        radio.addEventListener('change', () => {
+            radio.form.requestSubmit();
+        });
+    });
+});

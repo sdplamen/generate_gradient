@@ -4,7 +4,10 @@ import re
 
 from generate.palettes import AVAILABLE_PALETTES
 
-NUM_COLORS = 6
+# How many colours a gradient can have; most gradients people use have 2–3 stops, so new ones start with 3
+MIN_COLORS = 2
+MAX_COLORS = 6
+DEFAULT_COLORS = 3
 DIRECTION = 'to top'
 HEX_COLOR_RE = re.compile(r'^#[0-9a-fA-F]{6}$')
 
@@ -20,7 +23,11 @@ def _to_rgb(color):
     return tuple(int(color[i:i + 2], 16) for i in (1, 3, 5))
 
 
-def resize_colors(colors, size=NUM_COLORS):
+def clamp_count(count):
+    return min(max(count, MIN_COLORS), MAX_COLORS)
+
+
+def resize_colors(colors, size=DEFAULT_COLORS):
     """Return `size` colours: pick evenly spaced ones from a longer list, blend between neighbours for a shorter one."""
     if len(colors) == size:
         return list(colors)
@@ -113,7 +120,7 @@ LOCK_CANDIDATES = 40
 LOCK_SHORTLIST = 5
 
 
-def random_colors(size=NUM_COLORS, locked=None):
+def random_colors(size=DEFAULT_COLORS, locked=None):
     """Random colours; `locked` maps slot index (0-based) to a colour that stays in that slot.
 
     The other slots are chosen to blend into the locked colours: several random palettes are tried
@@ -133,12 +140,14 @@ def random_colors(size=NUM_COLORS, locked=None):
     return list(random.choice(candidates[:LOCK_SHORTLIST]))
 
 
-def normalize_colors(colors):
-    """Make stored colours safe to display: drop invalid values and fit the rest to NUM_COLORS."""
+def normalize_colors(colors, size=None):
+    """Make stored colours safe to display: drop invalid values and fit the rest to `size` colours
+    (by default their own count, kept between MIN_COLORS and MAX_COLORS)."""
     valid = [color.lower() for color in colors or [] if isinstance(color, str) and HEX_COLOR_RE.match(color)]
+    size = clamp_count(size or len(valid) or DEFAULT_COLORS)
     if not valid:
-        return random_colors()
-    return resize_colors(valid)
+        return random_colors(size)
+    return resize_colors(valid, size)
 
 
 def build_gradient(colors, direction=DIRECTION):

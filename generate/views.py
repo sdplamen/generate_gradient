@@ -12,34 +12,57 @@ from rest_framework.permissions import IsAuthenticatedOrReadOnly
 from rest_framework.views import APIView
 from rest_framework.response import Response
 from rest_framework import status
-from generate.colors import DIRECTION, HEX_COLOR_RE, NUM_COLORS, build_gradient, normalize_colors, random_colors
+from generate.colors import (
+    DEFAULT_COLORS, DIRECTION, HEX_COLOR_RE, MAX_COLORS, MIN_COLORS, build_gradient, normalize_colors, random_colors,
+    resize_colors,
+)
 from generate.forms import GradientForm
 from generate.mixins import GradientContextMixin
 from generate.models import ColorPalette
 from generate.serializers import GradientSerializer
 
 
-def locked_slots_from_query(query):
-    """Slot numbers (1-based) from ?lock=1,3, keeping only those that also have a valid colorN in the query."""
+def count_from_query(query):
+    """The number of colours asked for with ?count=N (MIN_COLORS to MAX_COLORS), or None."""
+    count = query.get('count', '')
+    if count.isdigit() and MIN_COLORS <= int(count) <= MAX_COLORS:
+        return int(count)
+    return None
+
+
+def locked_slots_from_query(query, colors=None):
+    """Slot numbers (1-based) from ?lock=1,3, keeping only those that also have a valid colorN in the query.
+
+    With `colors`, a slot also has to exist there and still hold its colorN (resizing to fewer colours can drop it).
+    """
     slots = set()
     for part in query.get('lock', '').split(','):
         part = part.strip()
-        if part.isdigit() and 1 <= int(part) <= NUM_COLORS:
-            if HEX_COLOR_RE.match(query.get(f'color{part}', '')):
-                slots.add(int(part))
+        if part.isdigit() and 1 <= int(part) <= MAX_COLORS:
+            color = query.get(f'color{part}', '')
+            if HEX_COLOR_RE.match(color):
+                if colors is None or (int(part) <= len(colors) and colors[int(part) - 1] == color.lower()):
+                    slots.add(int(part))
     return sorted(slots)
 
 
 def colors_from_query(query):
-    """Colours from a ?color1=...&color6=... query, or None for random ones (missing or invalid colours).
+    """Colours from a ?color1=...&colorN=... query, or None for random ones (missing or invalid colours).
 
+    ?count=N picks how many colours (2–6): the given colours are blended or sampled to that many.
     ?random=true gives random colours, except in the slots locked with ?lock=1,3, which keep their colorN.
     """
+    count = count_from_query(query)
     if query.get('random') == 'true':
         locked = {slot - 1: query[f'color{slot}'].lower() for slot in locked_slots_from_query(query)}
-        return random_colors(locked=locked) if locked else None
+        if not locked and count is None:
+            return None
+        return random_colors(count or DEFAULT_COLORS, locked=locked)
+
     form = GradientForm(query or None)
-    return form.colors if form.is_valid() else None
+    if not form.is_valid():
+        return random_colors(count) if count else None
+    return resize_colors(form.colors, count) if count else form.colors
 
 
 class GradientGeneratorView(View, GradientContextMixin):
@@ -52,7 +75,7 @@ class GradientGeneratorView(View, GradientContextMixin):
             colors = colors_from_query(request.GET)
 
         context = self.get_gradient_context(request, colors, active_palette_id=palette_id)
-        context['locked_slots'] = locked_slots_from_query(request.GET)
+        context['locked_slots'] = locked_slots_from_query(request.GET, context['colors'])
         return render(request, self.template_name, context)
 
     def post(self, request):

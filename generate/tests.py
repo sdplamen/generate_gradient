@@ -5,10 +5,12 @@ from django.test import TestCase
 from django.urls import reverse
 
 from generate.colors import (
-    HEX_COLOR_RE, NUM_COLORS, _distance, _harmonious_colors, normalize_colors, random_colors, resize_colors,
+    DEFAULT_COLORS, HEX_COLOR_RE, MAX_COLORS, MIN_COLORS, _distance, _harmonious_colors, normalize_colors, random_colors, resize_colors,
 )
 from generate.forms import GradientForm
 from generate.models import ColorPalette
+
+NUM_COLORS = MAX_COLORS
 
 BLUES = ['#000011', '#000022', '#000033', '#000044', '#000055', '#000066']
 REDS = ['#110000', '#220000', '#330000', '#440000', '#550000', '#660000']
@@ -22,12 +24,12 @@ class ColorsTests(TestCase):
     def test_random_colors_are_valid_hex(self):
         for _ in range(200):
             colors = random_colors()
-            self.assertEqual(len(colors), NUM_COLORS)
+            self.assertEqual(len(colors), DEFAULT_COLORS)
             self.assertTrue(all(HEX_COLOR_RE.match(color) for color in colors), colors)
 
     def test_random_colors_keep_locked_slots(self):
         for _ in range(50):
-            colors = random_colors(locked={0: '#123456', 3: '#abcdef'})
+            colors = random_colors(NUM_COLORS, locked={0: '#123456', 3: '#abcdef'})
             self.assertEqual((colors[0], colors[3]), ('#123456', '#abcdef'))
             self.assertEqual(len(colors), NUM_COLORS)
 
@@ -37,7 +39,7 @@ class ColorsTests(TestCase):
         with mock.patch('generate.colors._curated_colors', side_effect=[clashing, smooth] * 20), \
                 mock.patch('generate.colors.random.random', return_value=0), \
                 mock.patch('generate.colors.LOCK_SHORTLIST', 1):
-            colors = random_colors(locked={0: '#ff0000'})
+            colors = random_colors(NUM_COLORS, locked={0: '#ff0000'})
         self.assertEqual(colors, ['#ff0000'] + smooth[1:])
 
     def test_harmonious_sweep_passes_close_to_the_anchor(self):
@@ -51,9 +53,15 @@ class ColorsTests(TestCase):
                          ['#000001', '#000003', '#000005'])
 
     def test_normalize_drops_invalid_values_and_fits_length(self):
-        colors = normalize_colors(['#FF0000', 'pink', '#0000ff'])
-        self.assertEqual(len(colors), NUM_COLORS)
-        self.assertEqual((colors[0], colors[-1]), ('#ff0000', '#0000ff'))
+        self.assertEqual(normalize_colors(['#FF0000', 'pink', '#0000ff']), ['#ff0000', '#0000ff'])
+        self.assertEqual(normalize_colors(['#111111']), ['#111111'] * MIN_COLORS)
+        self.assertEqual(len(normalize_colors(BLUES + REDS)), MAX_COLORS)
+        self.assertEqual(normalize_colors(['#000000', '#ffffff'], 3), ['#000000', '#808080', '#ffffff'])
+
+    def test_random_colors_any_count(self):
+        for size in range(MIN_COLORS, MAX_COLORS + 1):
+            self.assertEqual(len(random_colors(size)), size)
+            self.assertEqual(len(random_colors(size, locked={0: '#123456'})), size)
 
 
 class GradientFormTests(TestCase):
@@ -66,6 +74,12 @@ class GradientFormTests(TestCase):
         for bad in ['red;', 'pink', '#00000000', '#12345g', '']:
             form = GradientForm(color_data([bad] + BLUES[1:]))
             self.assertFalse(form.is_valid(), bad)
+
+    def test_field_count_follows_the_data(self):
+        self.assertEqual(GradientForm(color_data(BLUES[:2])).color_names, ['color1', 'color2'])
+        self.assertEqual(len(GradientForm(initial=color_data(BLUES[:4])).color_names), 4)
+        self.assertEqual(len(GradientForm().color_names), DEFAULT_COLORS)
+        self.assertFalse(GradientForm({'color1': '#000000'}).is_valid())
 
 
 class GradientPageTests(TestCase):
@@ -83,6 +97,37 @@ class GradientPageTests(TestCase):
     def test_valid_query_colors_are_shown(self):
         response = self.client.get(reverse('generate_gradient'), color_data(BLUES))
         self.assertContains(response, f'linear-gradient(to top, {", ".join(BLUES)})')
+
+    def test_first_visit_gets_default_count(self):
+        response = self.client.get(reverse('generate_gradient'))
+        self.assertEqual(len(response.context['colors']), DEFAULT_COLORS)
+        self.assertRegex(response.content.decode(), rf'value="{DEFAULT_COLORS}" checked')
+
+    def test_query_with_fewer_colors_keeps_them(self):
+        response = self.client.get(reverse('generate_gradient'), color_data(BLUES[:2]))
+        self.assertEqual(response.context['colors'], BLUES[:2])
+
+    def test_count_resizes_the_given_colors(self):
+        query = {**color_data(['#000000', '#ffffff']), 'count': '3'}
+        response = self.client.get(reverse('generate_gradient'), query)
+        self.assertEqual(response.context['colors'], ['#000000', '#808080', '#ffffff'])
+        query = {**color_data(BLUES), 'count': '2'}
+        self.assertEqual(self.client.get(reverse('generate_gradient'), query).context['colors'], [BLUES[0], BLUES[-1]])
+
+    def test_random_uses_the_count(self):
+        for count in range(MIN_COLORS, MAX_COLORS + 1):
+            response = self.client.get(reverse('generate_gradient'), {'random': 'true', 'count': str(count)})
+            self.assertEqual(len(response.context['colors']), count)
+
+    def test_out_of_range_count_is_ignored(self):
+        for count in ['1', '7', 'x', '']:
+            response = self.client.get(reverse('generate_gradient'), {**color_data(BLUES[:4]), 'count': count})
+            self.assertEqual(response.context['colors'], BLUES[:4])
+
+    def test_locks_outside_the_new_count_are_dropped(self):
+        query = {**color_data(BLUES), 'count': '2', 'lock': '1,3'}
+        response = self.client.get(reverse('generate_gradient'), query)
+        self.assertEqual(response.context['locked_slots'], [1])
 
     def test_invalid_query_colors_are_ignored(self):
         response = self.client.get(reverse('generate_gradient'), color_data(['red;'] * NUM_COLORS))
@@ -130,7 +175,12 @@ class GradientPageTests(TestCase):
     def test_saved_palette_with_fewer_colors_is_shown(self):
         palette = ColorPalette.objects.create(user=self.owner, colors=['#111111', '#222222'])
         response = self.client.get(reverse('get_palette', args=[palette.id]))
-        self.assertContains(response, 'linear-gradient(to top, #111111')
+        self.assertContains(response, 'linear-gradient(to top, #111111, #222222)')
+
+    def test_save_palette_with_three_colors(self):
+        self.client.force_login(self.owner)
+        self.client.post(reverse('generate_gradient'), color_data(BLUES[:3]))
+        self.assertEqual(ColorPalette.objects.get().colors, BLUES[:3])
 
     def test_owner_can_edit_palette(self):
         palette = ColorPalette.objects.create(user=self.owner, colors=BLUES)

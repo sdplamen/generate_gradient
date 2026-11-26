@@ -3,6 +3,7 @@
     <ul>
         <li class="random-color visually-hidden-btn">
             <form method="GET" action="{% url 'generate_gradient' %}" class="nav-form" id="random-color-form">
+                {% if colors %}<input type="hidden" name="count" value="{{ colors|length }}">{% endif %}
                 <button class="nav-btn" name="random" value="true" id="random-color-btn">Random Colors</button>
             </form>
         </li>
