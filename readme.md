@@ -34,11 +34,22 @@ Setup
 - Copy the CSS code from the textarea manually.
 
 ### REST API
-- Endpoint: http://127.0.0.1:8000/api/gradient/
-- Query Parameters:
-  - direction: Gradient direction (e.g., to right, to left, to bottom, to top). Default: to right.
-  - color1 to color6: Hex color codes (e.g., #ff0000). Defaults to random colors if not provided. 
-  - random: Set to true to generate random colors (ignores color1 to color6).
+#### GET /api/gradient/
+Returns one gradient (JSON by default). Query parameters:
+  - direction: `to top`, `to right`, `to bottom`, `to left`, a corner such as `to top right`, or an angle from `-360deg` to `360deg`. Default: `to top`.
+  - count: number of colours, 2–6. Given colours are blended or sampled to that many.
+  - color1 to color6: Hex color codes (e.g., #ff0000). Defaults to random colors if not provided.
+  - random: Set to true to generate random colors (ignores color1 to color6, except slots kept with `lock=1,3`).
+  - format: `json` (default), `css` (the CSS declaration as `text/css`) or `svg` (a 400×400 SVG image). An `Accept` header works too.
+
+An invalid `direction` or `count` returns 400 with the error as JSON.
+
+#### POST /api/gradient/
+Saves `color1`…`colorN` (and an optional `name`) as a palette. Requires login, and is limited per user
+(default 30 per hour; set `PALETTE_CREATE_RATE`, e.g. `100/day`). Over the limit it returns 429 with a `Retry-After` header.
+
+#### GET /api/palettes/
+Saved palettes, oldest first, 20 per page: `?page=2`, `?page_size=` (up to 100), `?mine=true` for your own (requires login).
 
 ### API Documentation:
 - Swagger UI: http://127.0.0.1:8000/api/schema/swagger-ui/

@@ -77,6 +77,21 @@ REST_FRAMEWORK = {
     'DEFAULT_PERMISSION_CLASSES': [
         'rest_framework.permissions.IsAuthenticated',
     ],
+    'DEFAULT_THROTTLE_RATES': {
+        # Palettes each user can save through POST /api/gradient/, e.g. 30/hour or 100/day
+        'palette_create': config('PALETTE_CREATE_RATE', default='30/hour'),
+    },
+}
+
+CACHES = {
+    'default': {
+        'BACKEND': 'django.core.cache.backends.locmem.LocMemCache',
+    },
+    # Throttle counts are kept in the database so all gunicorn workers share them (table made by createcachetable)
+    'throttle': {
+        'BACKEND': 'django.core.cache.backends.db.DatabaseCache',
+        'LOCATION': 'throttle_cache',
+    },
 }
 
 SPECTACULAR_SETTINGS = {

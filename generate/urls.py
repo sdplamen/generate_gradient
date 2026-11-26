@@ -11,6 +11,7 @@ urlpatterns = [
     path('gradient/<int:pk>/edit/', views.PaletteUpdateView.as_view(), name='edit-palette'),
     path('gradient/<int:pk>/delete/', views.PaletteDeleteView.as_view(), name='delete-palette'),
     path('api/gradient/', views.GradientAPIView.as_view(), name='api_gradient'),
+    path('api/palettes/', views.PaletteListAPIView.as_view(), name='api_palettes'),
     path('api/schema/', SpectacularAPIView.as_view(), name='schema'),
     path('api/schema/swagger-ui/', SpectacularSwaggerView.as_view(url_name='schema'), name='swagger-ui'),
     path('api/schema/redoc/', SpectacularRedocView.as_view(url_name='schema'), name='redoc'),

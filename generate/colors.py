@@ -11,6 +11,15 @@ DEFAULT_COLORS = 3
 DIRECTION = 'to top'
 HEX_COLOR_RE = re.compile(r'^#[0-9a-fA-F]{6}$')
 
+# CSS gradient directions the API accepts, with their angle (CSS: 0deg points up, angles go clockwise);
+# any whole angle from -360deg to 360deg is accepted too
+DIRECTION_ANGLES = {
+    'to top': 0, 'to top right': 45, 'to right': 90, 'to bottom right': 135,
+    'to bottom': 180, 'to bottom left': 225, 'to left': 270, 'to top left': 315,
+}
+DIRECTIONS = tuple(DIRECTION_ANGLES)
+ANGLE_RE = re.compile(r'^(-?\d{1,3})deg$')
+
 # Share of random gradients taken from the curated palettes; the rest are generated on the colour wheel
 CURATED_SHARE = 0.7
 
@@ -148,6 +157,33 @@ def normalize_colors(colors, size=None):
     if not valid:
         return random_colors(size)
     return resize_colors(valid, size)
+
+
+def parse_direction(value):
+    """A CSS gradient direction in its canonical form ('to top right', '45deg'), or None if it is not one we accept.
+
+    Case and extra spaces are ignored, and corner keywords may come in either order ('to right top').
+    """
+    words = value.lower().split()
+    if len(words) == 1:
+        match = ANGLE_RE.match(words[0])
+        if match and -360 <= int(match.group(1)) <= 360:
+            return f'{int(match.group(1))}deg'
+        return None
+    if len(words) not in (2, 3) or words[0] != 'to':
+        return None
+    sides = words[1:]
+    if len(sides) == 2 and sides[0] in ('left', 'right'):
+        sides.reverse()
+    direction = ' '.join(['to', *sides])
+    return direction if direction in DIRECTION_ANGLES else None
+
+
+def direction_angle(direction):
+    """The angle in degrees of a direction returned by parse_direction."""
+    if direction in DIRECTION_ANGLES:
+        return DIRECTION_ANGLES[direction]
+    return int(direction.removesuffix('deg'))
 
 
 def build_gradient(colors, direction=DIRECTION):
