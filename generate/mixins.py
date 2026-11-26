@@ -1,5 +1,5 @@
 from django.core.paginator import Paginator
-from generate.colors import MAX_COLORS, MIN_COLORS, build_gradient, normalize_colors, random_colors
+from generate.colors import DIRECTION, MAX_COLORS, MIN_COLORS, build_gradient, normalize_colors, random_colors
 from generate.forms import GradientForm
 from generate.models import ColorPalette
 
@@ -18,6 +18,7 @@ class GradientContextMixin:
         return {
             'form': GradientForm(initial=GradientForm.initial_for(colors)),
             'gradient': gradient,
+            'direction': DIRECTION,
             'css_code': css_code,
             'colors': colors,
             'color_counts': range(MIN_COLORS, MAX_COLORS + 1),

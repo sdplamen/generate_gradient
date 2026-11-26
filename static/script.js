@@ -75,13 +75,82 @@ function cancelLongPress() {
 document.addEventListener('touchend', cancelLongPress, { passive: true });
 document.addEventListener('touchcancel', cancelLongPress, { passive: true });
 
-// Copy the generated CSS code to the clipboard
+// Copy Code: copies the gradient as code, in the format picked next to the button
+const EXPORT_FORMATS = {
+    css: (colors, direction) => `background: linear-gradient(${direction}, ${colors.join(', ')});`,
+
+    // Arbitrary-value class: works in Tailwind v3 and v4, with any number of colours
+    tailwind: (colors, direction) => `bg-[linear-gradient(${direction.replace(/ /g, '_')},${colors.join(',')})]`,
+
+    svg: (colors, direction) => {
+        const ends = {
+            'to top': 'x1="0" y1="1" x2="0" y2="0"',
+            'to bottom': 'x1="0" y1="0" x2="0" y2="1"',
+            'to left': 'x1="1" y1="0" x2="0" y2="0"',
+            'to right': 'x1="0" y1="0" x2="1" y2="0"',
+        };
+        const stops = colors.map((color, i) =>
+            `      <stop offset="${Math.round((i / (colors.length - 1)) * 100)}%" stop-color="${color}"/>`
+        ).join('\n');
+        return [
+            '<svg xmlns="http://www.w3.org/2000/svg" width="800" height="600" viewBox="0 0 800 600">',
+            '  <defs>',
+            `    <linearGradient id="gradient" ${ends[direction] || ends['to top']}>`,
+            stops,
+            '    </linearGradient>',
+            '  </defs>',
+            '  <rect width="100%" height="100%" fill="url(#gradient)"/>',
+            '</svg>',
+        ].join('\n');
+    },
+
+    json: (colors, direction) => JSON.stringify({ direction, colors }, null, 2),
+
+    hex: (colors) => colors.join(', '),
+};
+
 document.addEventListener('DOMContentLoaded', () => {
     const copyBtn = document.getElementById('copy');
     const cssCodeArea = document.getElementById('css-code-area');
+    const formatSelect = document.getElementById('export-format');
     if (!copyBtn || !cssCodeArea) return;
 
+    const FORMAT_KEY = 'exportFormat';
     const originalText = copyBtn.textContent;
+    const direction = cssCodeArea.dataset.direction || 'to top';
+
+    // Remember the picked format for next time (only a convenience, so storage errors are ignored)
+    if (formatSelect) {
+        try {
+            const saved = localStorage.getItem(FORMAT_KEY);
+            if (saved && EXPORT_FORMATS[saved]) formatSelect.value = saved;
+        } catch (err) { /* storage unavailable */ }
+    }
+
+    // The colours as they are in the inputs now, color1 first, so picks not yet applied are included
+    function currentColors() {
+        return [...document.querySelectorAll('.color-input-form input[type="color"]')].map(input => input.value);
+    }
+
+    function currentCode() {
+        const format = formatSelect && EXPORT_FORMATS[formatSelect.value] ? formatSelect.value : 'css';
+        return EXPORT_FORMATS[format](currentColors(), direction);
+    }
+
+    function refreshCodeArea() {
+        cssCodeArea.value = currentCode();
+    }
+
+    refreshCodeArea();
+    document.querySelectorAll('.color-input-form input[type="color"]').forEach(input => {
+        input.addEventListener('input', refreshCodeArea);
+    });
+    if (formatSelect) {
+        formatSelect.addEventListener('change', () => {
+            try { localStorage.setItem(FORMAT_KEY, formatSelect.value); } catch (err) { /* storage unavailable */ }
+            refreshCodeArea();
+        });
+    }
 
     function showCopied(text) {
         copyBtn.textContent = text;
@@ -91,14 +160,12 @@ document.addEventListener('DOMContentLoaded', () => {
     }
 
     copyBtn.addEventListener('click', async () => {
-        // Copy only the hex codes, e.g. "#1a2b3c, #4d5e6f"
-        const hexCodes = cssCodeArea.value.match(/#[0-9a-fA-F]{3,8}\b/g);
-        if (!hexCodes) return;
-        const code = hexCodes.join(', ');
+        const code = currentCode();
+        const label = formatSelect ? formatSelect.selectedOptions[0].textContent : 'CSS';
 
         try {
             await navigator.clipboard.writeText(code);
-            showCopied('Copied!');
+            showCopied(`Copied ${label}!`);
         } catch (err) {
             // Fallback for browsers or non-HTTPS pages without the Clipboard API
             const temp = document.createElement('textarea');
@@ -109,7 +176,7 @@ document.addEventListener('DOMContentLoaded', () => {
             temp.select();
             const ok = document.execCommand('copy');
             document.body.removeChild(temp);
-            showCopied(ok ? 'Copied!' : 'Copy failed');
+            showCopied(ok ? `Copied ${label}!` : 'Copy failed');
         }
     });
 });

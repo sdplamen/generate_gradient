@@ -40,7 +40,16 @@
             <input type="hidden" name="lock" id="lock-input" value="{{ locked_slots|join:',' }}">
             <div class="form-buttons">
                 <button class="update">Update Gradient</button>
-                <button type="button" id="copy">Copy Code</button>
+                <div class="copy-group">
+                    <button type="button" id="copy">Copy Code</button>
+                    <select id="export-format" aria-label="Code format" title="Code format to copy">
+                        <option value="css">CSS</option>
+                        <option value="tailwind">Tailwind</option>
+                        <option value="svg">SVG</option>
+                        <option value="json">JSON</option>
+                        <option value="hex">Hex list</option>
+                    </select>
+                </div>
                 <details class="saved-palettes">
                     <summary>Saved Palettes</summary>
                     <div class="saved-palettes-menu">
@@ -73,7 +82,7 @@
         </form>
 
         <div class="css-code-container">
-            <textarea id="css-code-area" class="css-code" readonly>{{ css_code }}</textarea>
+            <textarea id="css-code-area" class="css-code" data-direction="{{ direction }}" readonly>{{ css_code }}</textarea>
         </div>
     </div>
 </section>

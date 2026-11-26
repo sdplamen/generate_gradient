@@ -591,3 +591,64 @@ button:hover {
     accent-color: #f3f2f2;
     cursor: pointer;
 }
+
+/* Copy Code with its format picker, joined into one control */
+.copy-group {
+    display: inline-flex;
+    align-items: stretch;
+}
+
+.form-buttons .copy-group #copy {
+    border-top-right-radius: 0;
+    border-bottom-right-radius: 0;
+}
+
+.copy-group select {
+    height: 40px;
+    padding: 0 8px;
+    font-family: inherit;
+    font-size: 0.9rem;
+    font-weight: 500;
+    color: antiquewhite;
+    background-color: #205067;
+    border: 1px solid #f3f2f2;
+    border-left: none;
+    border-radius: 0 8px 8px 0;
+    cursor: pointer;
+}
+
+.copy-group select:hover,
+.copy-group select:focus-visible {
+    background-color: #1f6acd;
+    color: #ffffcc;
+}
+
+@media (max-width: 600px) {
+    /* Update Gradient and Copy Code + format share the row, each sized to its text */
+    .form-buttons > .update,
+    .copy-group {
+        flex: 1 1 auto;
+        min-width: 0;
+    }
+
+    .form-buttons > .update,
+    .form-buttons .copy-group #copy {
+        padding: 0 10px;
+    }
+
+    .form-buttons .copy-group #copy {
+        flex: 1 1 auto;
+    }
+
+    .copy-group select {
+        padding: 0 4px;
+    }
+
+    .count-picker {
+        column-gap: 8px;
+    }
+
+    .count-picker label {
+        gap: 4px;
+    }
+}
