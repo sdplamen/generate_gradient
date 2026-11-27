@@ -7,7 +7,7 @@ from django.urls import reverse
 
 from generate.colors import (
     DEFAULT_COLORS, HEX_COLOR_RE, MAX_COLORS, MIN_COLORS, _distance, _harmonious_colors, build_gradient,
-    gradient_stops, mix_colors, normalize_colors, parse_direction, random_colors, resize_colors,
+    EASINGS, eased_stops, gradient_stops, mix_colors, normalize_colors, parse_direction, random_colors, resize_colors,
 )
 from generate.forms import GradientForm, style_from_query
 from generate.models import ColorPalette
@@ -266,11 +266,11 @@ class GradientStyleTests(TestCase):
                          'conic-gradient(from 90deg, #000000, #ffffff, #000000)')
 
     def test_style_from_query_falls_back_to_defaults(self):
-        self.assertEqual(style_from_query({'type': 'conic', 'angle': '360', 'interpolation': 'oklch'}),
-                         ('conic', 360, 'oklch'))
+        self.assertEqual(style_from_query({'type': 'conic', 'angle': '360', 'interpolation': 'oklch', 'easing': 'smoothstep'}),
+                         ('conic', 360, 'oklch', 'smoothstep'))
         for query in [{}, {'type': 'diamond', 'angle': '361'}, {'type': 'Radial', 'angle': '-5'}, {'angle': '4.5'},
-                      {'interpolation': 'OKLCH'}, {'interpolation': 'hsl'}]:
-            self.assertEqual(style_from_query(query), ('linear', 0, 'srgb'), query)
+                      {'interpolation': 'OKLCH'}, {'interpolation': 'hsl'}, {'easing': 'ease'}]:
+            self.assertEqual(style_from_query(query), ('linear', 0, 'srgb', 'linear'), query)
 
     def test_page_uses_type_and_angle(self):
         query = {**color_data(BLUES[:2]), 'type': 'conic', 'angle': '90'}
@@ -390,6 +390,62 @@ class InterpolationTests(TestCase):
         response = self.client.get(reverse('api_gradient'), {'interpolation': 'lab'})
         self.assertEqual(response.status_code, 400)
         self.assertIn('interpolation', response.json())
+
+
+class EasingTests(TestCase):
+    """Easing curves: eased stops injected between each pair of colours."""
+
+    def test_curves(self):
+        for name, ease in EASINGS.items():
+            self.assertEqual((ease(0), ease(1)), (0, 1), name)
+            self.assertAlmostEqual(ease(0.5), 0.5, places=6, msg=name)
+        # CSS ease-in-out is cubic-bezier(0.42, 0, 0.58, 1)
+        self.assertAlmostEqual(EASINGS['ease-in-out'](0.25), 0.1291, places=3)
+        self.assertAlmostEqual(EASINGS['smoothstep'](0.25), 0.15625)
+
+    def test_linear_easing_keeps_the_plain_css(self):
+        colors = ['#000000', '#ffffff']
+        self.assertEqual(build_gradient(colors, '90deg', easing='linear')[0], 'linear-gradient(90deg, #000000, #ffffff)')
+
+    def test_eased_stops_have_positions_and_follow_the_curve(self):
+        gradient = build_gradient(['#000000', '#ffffff'], '90deg', easing='smoothstep')[0]
+        self.assertTrue(gradient.startswith('linear-gradient(90deg, #000000 0%, #0e0e0e 14.29%, '), gradient)
+        self.assertTrue(gradient.endswith(', #ffffff 100%)'), gradient)
+        self.assertEqual(gradient.count('%'), 8)  # 6 injected stops plus both ends
+
+        stops = eased_stops(['#000000', '#808080', '#ffffff'], easing='ease-in-out')
+        self.assertEqual(len(stops), 15)
+        self.assertEqual(stops[7], (0.5, '#808080'))
+        # Easing in: the first step changes less than a steady blend would
+        self.assertLess(int(stops[1][1][1:3], 16), int(mix_colors('#000000', '#808080', 1 / 7)[1:3], 16))
+
+    def test_conic_eases_the_way_back_to_the_first_colour(self):
+        gradient = build_gradient(['#000000', '#ffffff'], '0deg', 'conic', easing='smoothstep')[0]
+        self.assertIn('#ffffff 50%', gradient)
+        self.assertTrue(gradient.endswith(', #000000 100%)'), gradient)
+        self.assertEqual(gradient.count('%'), 15)
+
+    def test_hsl_longer_hue_with_easing_puts_the_sweep_in_the_stops(self):
+        gradient = build_gradient(['#ff0000', '#0000ff'], '90deg', 'linear', 'hsl-longer', 'smoothstep')[0]
+        self.assertTrue(gradient.startswith('linear-gradient(90deg in hsl, #ff0000 0%, '), gradient)
+        # Through yellow, green and cyan, as "in hsl longer hue" would go
+        for stop in ('#ffca00 28.57%', '#6dff00 42.86%', '#00ff6d 57.14%', '#00caff 71.43%'):
+            self.assertIn(stop, gradient)
+        oklch = build_gradient(['#ff0000', '#0000ff'], '90deg', 'linear', 'oklch', 'ease-in-out')[0]
+        self.assertTrue(oklch.startswith('linear-gradient(90deg in oklch, #ff0000 0%, '), oklch)
+
+    def test_page_and_api(self):
+        response = self.client.get(reverse('generate_gradient'), {**color_data(BLUES[:2]), 'easing': 'smoothstep'})
+        self.assertContains(response, 'name="easing" value="smoothstep" checked')
+        self.assertContains(response, f'{BLUES[0]} 0%, ')
+
+        query = {**color_data(['#000000', '#ffffff']), 'easing': 'ease-in-out'}
+        data = self.client.get(reverse('api_gradient'), query).json()
+        self.assertEqual(data['easing'], 'ease-in-out')
+        self.assertEqual(data['gradient'].count('%'), 8)
+        svg = self.client.get(reverse('api_gradient'), {**query, 'format': 'svg'}).content.decode()
+        self.assertEqual(svg.count('<stop '), 17)
+        self.assertEqual(self.client.get(reverse('api_gradient'), {'easing': 'bounce'}).status_code, 400)
 
 
 class DirectionTests(TestCase):

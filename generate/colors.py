@@ -37,6 +37,35 @@ INTERPOLATIONS = {
 }
 INTERPOLATION_LABELS = {'srgb': 'sRGB', 'oklab': 'OKLab', 'oklch': 'OKLCH', 'hsl-longer': 'HSL longer hue'}
 DEFAULT_INTERPOLATION = 'srgb'
+
+# Easing curves: with anything but linear, each pair of colours gets EASING_STEPS - 1 extra stops, evenly spaced,
+# whose colours follow the curve, so the blend eases in and out of each colour instead of changing at a steady rate
+def _cubic_bezier(x1, y1, x2, y2):
+    """A CSS cubic-bezier() timing function: progress 0–1 in, eased progress out."""
+    def ease(t):
+        if t <= 0 or t >= 1:
+            return t
+        low, high = 0.0, 1.0
+        for _ in range(40):  # bisection on x(s) = t, which rises steadily for these control points
+            s = (low + high) / 2
+            if 3 * (1 - s) ** 2 * s * x1 + 3 * (1 - s) * s ** 2 * x2 + s ** 3 < t:
+                low = s
+            else:
+                high = s
+        s = (low + high) / 2
+        return 3 * (1 - s) ** 2 * s * y1 + 3 * (1 - s) * s ** 2 * y2 + s ** 3
+    return ease
+
+
+EASINGS = {
+    'linear': lambda t: t,
+    'ease-in-out': _cubic_bezier(0.42, 0, 0.58, 1),  # the same curve as CSS ease-in-out
+    'smoothstep': lambda t: t * t * (3 - 2 * t),
+}
+EASING_LABELS = {'linear': 'Linear', 'ease-in-out': 'Ease-In-Out', 'smoothstep': 'Smoothstep'}
+DEFAULT_EASING = 'linear'
+EASING_STEPS = 7
+
 # SVG can only blend in sRGB, so other spaces are drawn with this many stops between each pair of colours
 SVG_STEPS = 16
 # Below this chroma (OKLCH) or saturation (HSL) a colour is grey and its hue does not count
@@ -208,19 +237,35 @@ def direction_angle(direction):
     return int(direction.removesuffix('deg'))
 
 
-def build_gradient(colors, direction=DIRECTION, gradient_type=DEFAULT_TYPE, interpolation=DEFAULT_INTERPOLATION):
+def _percent(offset):
+    return f'{offset * 100:.2f}'.rstrip('0').rstrip('.') + '%'
+
+
+def build_gradient(colors, direction=DIRECTION, gradient_type=DEFAULT_TYPE, interpolation=DEFAULT_INTERPOLATION,
+                   easing=DEFAULT_EASING):
     """The CSS gradient and its `background:` declaration.
 
     `direction` is one returned by parse_direction. Radial gradients ignore it (they spread out from the centre);
     conic ones start at its angle and end on the first colour again, so the sweep has no hard seam.
     `interpolation` is one of INTERPOLATIONS; anything but sRGB adds its "in <space>" clause.
+    `easing` is one of EASINGS; anything but linear adds eased stops between the colours, each with its position.
     """
-    stops = ', '.join(colors)
-    space = f' {INTERPOLATIONS[interpolation]}' if INTERPOLATIONS.get(interpolation) else ''
+    space = INTERPOLATIONS.get(interpolation, '')
+    if easing in EASINGS and easing != DEFAULT_EASING:
+        # Conic gradients close the circle, so the way back to the first colour is eased too
+        ring = colors + [colors[0]] if gradient_type == 'conic' else colors
+        stops = ', '.join(f'{color} {_percent(offset)}' for offset, color in eased_stops(ring, interpolation, easing))
+        if interpolation == 'hsl-longer':
+            # The long way round is already in the stops; between neighbouring stops "longer hue" would
+            # loop the whole wheel again, so the browser takes the short way from one to the next
+            space = 'in hsl'
+    else:
+        stops = ', '.join(colors + [colors[0]] if gradient_type == 'conic' else colors)
+    space = f' {space}' if space else ''
     if gradient_type == 'radial':
         gradient = f'radial-gradient(circle{space}, {stops})'
     elif gradient_type == 'conic':
-        gradient = f'conic-gradient(from {direction_angle(direction)}deg{space}, {stops}, {colors[0]})'
+        gradient = f'conic-gradient(from {direction_angle(direction)}deg{space}, {stops})'
     else:
         gradient = f'linear-gradient({direction}{space}, {stops})'
     return gradient, f'background: {gradient};'
@@ -239,9 +284,9 @@ def _from_linear(channel):
 
 def _to_oklab(color):
     r, g, b = (_to_linear(c / 255) for c in _to_rgb(color))
-    l = (0.4122214708 * r + 0.5363325363 * g + 0.0514459929 * b) ** (1 / 3)
-    m = (0.2119034982 * r + 0.6806995451 * g + 0.1073969566 * b) ** (1 / 3)
-    s = (0.0883024619 * r + 0.2817188376 * g + 0.6299787005 * b) ** (1 / 3)
+    l = math.cbrt(0.4122214708 * r + 0.5363325363 * g + 0.0514459929 * b)
+    m = math.cbrt(0.2119034982 * r + 0.6806995451 * g + 0.1073969566 * b)
+    s = math.cbrt(0.0883024619 * r + 0.2817188376 * g + 0.6299787005 * b)
     return (
         0.2104542553 * l + 0.7936177850 * m - 0.0040720468 * s,
         1.9779984951 * l - 2.4285922050 * m + 0.4505937099 * s,
@@ -260,9 +305,14 @@ def _from_oklab(lightness, a, b):
     )
 
 
+def _round(value):
+    """Round halves up, like JavaScript's Math.round, so the page's exports match the API."""
+    return math.floor(value + 0.5)
+
+
 def _from_unit_rgb(r, g, b):
     """#rrggbb from 0–1 channels, clipping colours outside sRGB."""
-    return _to_hex(*(round(min(max(c, 0), 1) * 255) for c in (r, g, b)))
+    return _to_hex(*(_round(min(max(c, 0), 1) * 255) for c in (r, g, b)))
 
 
 def _to_space(color, interpolation):
@@ -280,7 +330,14 @@ def _to_space(color, interpolation):
 def _from_space(values, interpolation):
     if interpolation == 'hsl-longer':
         hue, saturation, lightness = values
-        return _from_unit_rgb(*colorsys.hls_to_rgb(hue / 360 % 1, lightness, saturation))
+        # The CSS Color 4 hsl-to-rgb formula, the same as the page's script, so both round the same way
+        hue %= 360
+        a = saturation * min(lightness, 1 - lightness)
+
+        def channel(n):
+            k = (n + hue / 30) % 12
+            return lightness - a * max(-1, min(k - 3, 9 - k, 1))
+        return _from_unit_rgb(channel(0), channel(8), channel(4))
     if interpolation == 'oklch':
         lightness, chroma, hue = values
         values = [lightness, chroma * math.cos(math.radians(hue)), chroma * math.sin(math.radians(hue))]
@@ -314,7 +371,7 @@ HUE_INDEX = {'oklch': 2, 'hsl-longer': 0}
 def mix_colors(start, end, fraction, interpolation=DEFAULT_INTERPOLATION):
     """The colour `fraction` (0–1) of the way from `start` to `end`, blended the way CSS does in `interpolation`."""
     if interpolation not in HUE_INDEX and interpolation != 'oklab':
-        return _to_hex(*(round(a + (b - a) * fraction) for a, b in zip(_to_rgb(start), _to_rgb(end))))
+        return _to_hex(*(_round(a + (b - a) * fraction) for a, b in zip(_to_rgb(start), _to_rgb(end))))
     a, b = _to_space(start, interpolation), _to_space(end, interpolation)
     if interpolation in HUE_INDEX:
         i = HUE_INDEX[interpolation]
@@ -322,16 +379,26 @@ def mix_colors(start, end, fraction, interpolation=DEFAULT_INTERPOLATION):
     return _from_space([x + (y - x) * fraction for x, y in zip(a, b)], interpolation)
 
 
-def gradient_stops(colors, interpolation=DEFAULT_INTERPOLATION, steps=SVG_STEPS):
-    """(offset 0–1, colour) stops that draw the gradient with plain sRGB blending.
+def eased_stops(colors, interpolation=DEFAULT_INTERPOLATION, easing=DEFAULT_EASING, steps=EASING_STEPS):
+    """(offset 0–1, colour) stops: `steps` evenly spaced ones per pair of colours, plus the last colour.
 
-    sRGB needs only the colours themselves; other spaces get `steps` stops per pair of colours, sampled in that space.
+    Each colour is the easing curve's share of the way between its pair, blended in `interpolation`.
     """
+    ease = EASINGS.get(easing, EASINGS[DEFAULT_EASING])
     last = len(colors) - 1
-    if INTERPOLATIONS.get(interpolation, '') == '':
-        return [(i / last, color) for i, color in enumerate(colors)]
     stops = [
-        ((i + k / steps) / last, mix_colors(colors[i], colors[i + 1], k / steps, interpolation))
+        ((i + k / steps) / last, colors[i] if k == 0 else mix_colors(colors[i], colors[i + 1], ease(k / steps), interpolation))
         for i in range(last) for k in range(steps)
     ]
     return stops + [(1.0, colors[-1])]
+
+
+def gradient_stops(colors, interpolation=DEFAULT_INTERPOLATION, easing=DEFAULT_EASING, steps=SVG_STEPS):
+    """(offset 0–1, colour) stops that draw the gradient with plain sRGB blending (for SVG).
+
+    A linear sRGB blend needs only the colours themselves; other spaces and easings get `steps` stops per pair.
+    """
+    if not INTERPOLATIONS.get(interpolation) and EASINGS.get(easing, EASINGS[DEFAULT_EASING]) is EASINGS[DEFAULT_EASING]:
+        last = len(colors) - 1
+        return [(i / last, color) for i, color in enumerate(colors)]
+    return eased_stops(colors, interpolation, easing, steps)

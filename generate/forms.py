@@ -2,7 +2,7 @@ from django import forms
 from django.core.validators import RegexValidator
 
 from generate.colors import (
-    DEFAULT_ANGLE, DEFAULT_COLORS, DEFAULT_INTERPOLATION, DEFAULT_TYPE, GRADIENT_TYPES, HEX_COLOR_RE, INTERPOLATIONS,
+    DEFAULT_ANGLE, DEFAULT_COLORS, DEFAULT_EASING, DEFAULT_INTERPOLATION, DEFAULT_TYPE, EASINGS, GRADIENT_TYPES, HEX_COLOR_RE, INTERPOLATIONS,
     MAX_ANGLE, MAX_COLORS, clamp_count,
 )
 from generate.models import NAME_MAX_LENGTH
@@ -11,8 +11,8 @@ COLOR_FIELD_NAMES = [f'color{i}' for i in range(1, MAX_COLORS + 1)]
 
 
 def style_from_query(query):
-    """(gradient type, angle, interpolation) from ?type=linear|radial|conic&angle=0..360&interpolation=oklch;
-    missing or invalid values get the defaults."""
+    """(gradient type, angle, interpolation, easing) from
+    ?type=linear|radial|conic&angle=0..360&interpolation=oklch&easing=smoothstep; missing or invalid values get the defaults."""
     gradient_type = query.get('type', '')
     if gradient_type not in GRADIENT_TYPES:
         gradient_type = DEFAULT_TYPE
@@ -21,10 +21,13 @@ def style_from_query(query):
     interpolation = query.get('interpolation', '')
     if interpolation not in INTERPOLATIONS:
         interpolation = DEFAULT_INTERPOLATION
-    return gradient_type, angle, interpolation
+    easing = query.get('easing', '')
+    if easing not in EASINGS:
+        easing = DEFAULT_EASING
+    return gradient_type, angle, interpolation, easing
 
 
-def style_params(gradient_type, angle, interpolation=DEFAULT_INTERPOLATION):
+def style_params(gradient_type, angle, interpolation=DEFAULT_INTERPOLATION, easing=DEFAULT_EASING):
     """The query parameters for a gradient style, leaving out the defaults so plain URLs stay plain."""
     params = {}
     if gradient_type != DEFAULT_TYPE:
@@ -33,6 +36,8 @@ def style_params(gradient_type, angle, interpolation=DEFAULT_INTERPOLATION):
         params['angle'] = angle
     if interpolation != DEFAULT_INTERPOLATION:
         params['interpolation'] = interpolation
+    if easing != DEFAULT_EASING:
+        params['easing'] = easing
     return params
 
 

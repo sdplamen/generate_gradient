@@ -8,7 +8,7 @@ from xml.sax.saxutils import quoteattr
 
 from rest_framework.renderers import BaseRenderer
 
-from generate.colors import DEFAULT_INTERPOLATION, direction_angle, gradient_stops
+from generate.colors import DEFAULT_EASING, DEFAULT_INTERPOLATION, direction_angle, gradient_stops
 
 SVG_SIZE = 400
 
@@ -61,10 +61,12 @@ class SVGRenderer(BaseRenderer):
             element = 'linearGradient'
             attributes = f'x1="{x1}" y1="{y1}" x2="{x2}" y2="{y2}"'
 
-        # SVG blends in sRGB only, so other interpolation spaces are drawn with extra stops sampled in that space
+        # SVG blends in sRGB only and linearly, so other spaces and easings are drawn with extra stops sampled from them
         stops = '\n'.join(
             f'    <stop offset="{round(offset, 4)}" stop-color={quoteattr(color)}/>'
-            for offset, color in gradient_stops(data['colors'], data.get('interpolation', DEFAULT_INTERPOLATION))
+            for offset, color in gradient_stops(
+                data['colors'], data.get('interpolation', DEFAULT_INTERPOLATION), data.get('easing', DEFAULT_EASING),
+            )
         )
         return (
             f'<svg xmlns="http://www.w3.org/2000/svg" width="{SVG_SIZE}" height="{SVG_SIZE}" '

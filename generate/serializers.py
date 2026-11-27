@@ -1,6 +1,6 @@
 from rest_framework import serializers
 from generate.colors import (
-    DEFAULT_INTERPOLATION, DEFAULT_TYPE, DIRECTION, DIRECTIONS, GRADIENT_TYPES, INTERPOLATIONS, MAX_COLORS, MIN_COLORS,
+    DEFAULT_EASING, DEFAULT_INTERPOLATION, DEFAULT_TYPE, DIRECTION, DIRECTIONS, EASINGS, GRADIENT_TYPES, INTERPOLATIONS, MAX_COLORS, MIN_COLORS,
     parse_direction,
 )
 from generate.models import ColorPalette
@@ -10,6 +10,7 @@ class GradientSerializer(serializers.Serializer):
     type = serializers.ChoiceField(choices=GRADIENT_TYPES)
     direction = serializers.CharField(max_length=20)
     interpolation = serializers.ChoiceField(choices=list(INTERPOLATIONS))
+    easing = serializers.ChoiceField(choices=list(EASINGS))
     colors = serializers.ListField(child=serializers.CharField(max_length=7), min_length=MIN_COLORS, max_length=MAX_COLORS)
     gradient = serializers.CharField()
     css_code = serializers.CharField()
@@ -32,6 +33,12 @@ class GradientQuerySerializer(serializers.Serializer):
         help_text='CSS Color 4 colour interpolation: srgb (classic blend), oklab, oklch, or hsl-longer '
                   '(in hsl longer hue, a rainbow sweep the long way round the colour wheel). '
                   f'Default: {DEFAULT_INTERPOLATION}. SVG output draws it with extra colour stops.',
+    )
+    easing = serializers.ChoiceField(
+        choices=list(EASINGS), required=False, default=DEFAULT_EASING,
+        help_text='Easing curve between each pair of colours: linear (a steady blend), ease-in-out (the CSS curve) or '
+                  'smoothstep. Anything but linear adds 6 evenly spaced stops per pair whose colours follow the curve, '
+                  f'for softer falloffs. Default: {DEFAULT_EASING}.',
     )
     count = serializers.IntegerField(
         required=False, min_value=MIN_COLORS, max_value=MAX_COLORS,

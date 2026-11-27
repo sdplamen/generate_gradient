@@ -75,7 +75,7 @@ function cancelLongPress() {
 document.addEventListener('touchend', cancelLongPress, { passive: true });
 document.addEventListener('touchcancel', cancelLongPress, { passive: true });
 
-// The gradient as it is set on the page now: colours (color1 first), type, angle and colour interpolation,
+// The gradient as it is set on the page now: colours (color1 first), type, angle, colour interpolation and easing,
 // including changes not yet applied
 function currentGradient() {
     const colors = [...document.querySelectorAll('.color-input-form input[type="color"]')].map(input => input.value);
@@ -87,6 +87,7 @@ function currentGradient() {
         type: typeInput ? typeInput.value : 'linear',
         angle: angleInput ? Number(angleInput.value) : 0,
         interpolation: interpolationInput ? interpolationInput.value : 'srgb',
+        easing: (document.querySelector('.easing-picker input[name="easing"]:checked') || { value: 'linear' }).value,
     };
 }
 
@@ -98,18 +99,53 @@ const INTERPOLATIONS = {
     'hsl-longer': 'in hsl longer hue',
 };
 
-// Same CSS as build_gradient in colors.py: radial spreads from the centre, conic closes the circle on its first colour
-function gradientCss({ colors, type, angle, interpolation }) {
-    const stops = colors.join(', ');
-    const space = INTERPOLATIONS[interpolation] ? ` ${INTERPOLATIONS[interpolation]}` : '';
+const percent = offset => `${(offset * 100).toFixed(2).replace(/\.?0+$/, '')}%`;
+
+// Same CSS as build_gradient in colors.py: radial spreads from the centre, conic closes the circle on its first colour.
+// An easing other than linear adds evenly spaced stops whose colours follow the curve
+function gradientCss({ colors, type, angle, interpolation, easing }) {
+    const ring = type === 'conic' ? [...colors, colors[0]] : colors;
+    let space = INTERPOLATIONS[interpolation] || '';
+    let stops;
+    if (easing && easing !== 'linear' && ColorSpaces.EASINGS[easing]) {
+        stops = ColorSpaces.easedStops(ring, interpolation, easing).map(([offset, color]) => `${color} ${percent(offset)}`).join(', ');
+        // The long way round is already in the stops; "longer hue" between neighbours would loop the wheel again
+        if (interpolation === 'hsl-longer') space = 'in hsl';
+    } else {
+        stops = ring.join(', ');
+    }
+    space = space ? ` ${space}` : '';
     if (type === 'radial') return `radial-gradient(circle${space}, ${stops})`;
-    if (type === 'conic') return `conic-gradient(from ${angle}deg${space}, ${stops}, ${colors[0]})`;
+    if (type === 'conic') return `conic-gradient(from ${angle}deg${space}, ${stops})`;
     return `linear-gradient(${angle}deg${space}, ${stops})`;
 }
 
-// SVG only blends in sRGB, so other spaces are drawn with extra stops sampled in that space (gradient_stops in colors.py)
+// Colour spaces and easing curves, as in colors.py: eased stops for the CSS, and extra stops for SVG, which only
+// blends linearly in sRGB (gradient_stops)
 const ColorSpaces = (() => {
     const SVG_STEPS = 16;
+    const EASING_STEPS = 7;
+
+    // A CSS cubic-bezier() timing function, solved for x by bisection
+    function cubicBezier(x1, y1, x2, y2) {
+        return t => {
+            if (t <= 0 || t >= 1) return t;
+            let low = 0;
+            let high = 1;
+            for (let i = 0; i < 40; i++) {
+                const s = (low + high) / 2;
+                if (3 * (1 - s) ** 2 * s * x1 + 3 * (1 - s) * s ** 2 * x2 + s ** 3 < t) low = s; else high = s;
+            }
+            const s = (low + high) / 2;
+            return 3 * (1 - s) ** 2 * s * y1 + 3 * (1 - s) * s ** 2 * y2 + s ** 3;
+        };
+    }
+
+    const EASINGS = {
+        linear: t => t,
+        'ease-in-out': cubicBezier(0.42, 0, 0.58, 1),
+        smoothstep: t => t * t * (3 - 2 * t),
+    };
     const POWERLESS_HUE = 1e-4;
     const HUE_INDEX = { oklch: 2, 'hsl-longer': 0 };
 
@@ -198,6 +234,12 @@ const ColorSpaces = (() => {
     }
 
     function mix(start, end, t, space) {
+        if (!INTERPOLATIONS[space]) {
+            // In 0–255 channels, like mix_colors in colors.py, so both round the same way
+            const a = toRgb(start).map(c => c * 255);
+            const b = toRgb(end).map(c => c * 255);
+            return '#' + a.map((value, i) => Math.round(value + (b[i] - value) * t).toString(16).padStart(2, '0')).join('');
+        }
         const a = toSpace(start, space);
         const b = toSpace(end, space);
         if (space in HUE_INDEX) {
@@ -207,21 +249,30 @@ const ColorSpaces = (() => {
         return fromSpace(a.map((value, i) => value + (b[i] - value) * t), space);
     }
 
-    // [offset 0–1, colour] pairs that draw the gradient with plain sRGB blending
-    function stops(colors, space) {
+    // [offset 0–1, colour] pairs: `steps` evenly spaced ones per pair of colours, coloured along the easing curve
+    function easedStops(colors, space, easing, steps = EASING_STEPS) {
+        const ease = EASINGS[easing] || EASINGS.linear;
         const last = colors.length - 1;
-        if (!INTERPOLATIONS[space]) return colors.map((color, i) => [i / last, color]);
         const result = [];
         for (let i = 0; i < last; i++) {
-            for (let k = 0; k < SVG_STEPS; k++) {
-                result.push([(i + k / SVG_STEPS) / last, mix(colors[i], colors[i + 1], k / SVG_STEPS, space)]);
+            for (let k = 0; k < steps; k++) {
+                const color = k === 0 ? colors[i] : mix(colors[i], colors[i + 1], ease(k / steps), space);
+                result.push([(i + k / steps) / last, color]);
             }
         }
         result.push([1, colors[last]]);
         return result;
     }
 
-    return { stops };
+    // [offset 0–1, colour] pairs that draw the gradient with plain linear sRGB blending (for SVG)
+    function stops(colors, space, easing) {
+        if (!INTERPOLATIONS[space] && (!EASINGS[easing] || easing === 'linear')) {
+            return colors.map((color, i) => [i / (colors.length - 1), color]);
+        }
+        return easedStops(colors, space, easing, SVG_STEPS);
+    }
+
+    return { EASINGS, easedStops, stops };
 })();
 
 const round = value => Math.round(value * 100) / 100;
@@ -234,12 +285,12 @@ const EXPORT_FORMATS = {
     tailwind: gradient => `bg-[${gradientCss(gradient).replace(/, /g, ',').replace(/ /g, '_')}]`,
 
     // SVG has no conic gradients, so this format is switched off for them
-    svg: ({ colors, type, angle, interpolation }) => {
+    svg: ({ colors, type, angle, interpolation, easing }) => {
         const width = 800;
         const height = 600;
         const cx = width / 2;
         const cy = height / 2;
-        const stops = ColorSpaces.stops(colors, interpolation).map(([offset, color]) =>
+        const stops = ColorSpaces.stops(colors, interpolation, easing).map(([offset, color]) =>
             `      <stop offset="${round(offset * 100)}%" stop-color="${color}"/>`
         ).join('\n');
 
@@ -271,8 +322,8 @@ const EXPORT_FORMATS = {
         ].join('\n');
     },
 
-    json: ({ colors, type, angle, interpolation }) =>
-        JSON.stringify(type === 'radial' ? { type, interpolation, colors } : { type, angle, interpolation, colors }, null, 2),
+    json: ({ colors, type, angle, interpolation, easing }) =>
+        JSON.stringify(type === 'radial' ? { type, interpolation, easing, colors } : { type, angle, interpolation, easing, colors }, null, 2),
 
     hex: ({ colors }) => colors.join(', '),
 };
@@ -494,10 +545,11 @@ document.addEventListener('DOMContentLoaded', () => {
     const angleValue = document.getElementById('angle-value');
 
     // Same as style_params in forms.py: defaults are left out of URLs
-    function setStyleParams(params, { type, angle, interpolation }) {
+    function setStyleParams(params, { type, angle, interpolation, easing }) {
         if (type === 'linear') params.delete('type'); else params.set('type', type);
         if (angle === 0) params.delete('angle'); else params.set('angle', String(angle));
         if (interpolation === 'srgb') params.delete('interpolation'); else params.set('interpolation', interpolation);
+        if (easing === 'linear') params.delete('easing'); else params.set('easing', easing);
     }
 
     function update() {
@@ -527,7 +579,7 @@ document.addEventListener('DOMContentLoaded', () => {
     }
 
     angleInput.addEventListener('input', update);
-    document.querySelectorAll('.type-picker input[name="type"], .interpolation-picker input[name="interpolation"]').forEach(radio => {
+    document.querySelectorAll('.type-picker input[name="type"], .interpolation-picker input[name="interpolation"], .easing-picker input[name="easing"]').forEach(radio => {
         radio.addEventListener('change', update);
     });
     document.querySelectorAll('.color-input-form input[type="color"]').forEach(input => {

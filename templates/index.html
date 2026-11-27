@@ -56,6 +56,15 @@
                     </label>
                     {% endfor %}
                 </fieldset>
+                <fieldset class="count-picker easing-picker">
+                    <legend>Easing:</legend>
+                    {% for value, label in easings %}
+                    <label>
+                        <input type="radio" name="easing" value="{{ value }}"{% if value == easing %} checked{% endif %}>
+                        <span>{{ label }}</span>
+                    </label>
+                    {% endfor %}
+                </fieldset>
                 {# Hidden, not disabled, for radial gradients, so the angle is still sent and comes back when switching back #}
                 <div class="angle-control"{% if gradient_type == 'radial' %} hidden{% endif %}>
                     <label for="angle-input" id="angle-label">{% if gradient_type == 'conic' %}Gradient Start Angle:{% else %}Gradient Angle:{% endif %}</label>
