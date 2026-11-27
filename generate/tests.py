@@ -7,7 +7,7 @@ from django.urls import reverse
 
 from generate.colors import (
     DEFAULT_COLORS, HEX_COLOR_RE, MAX_COLORS, MIN_COLORS, _distance, _harmonious_colors, build_gradient,
-    normalize_colors, parse_direction, random_colors, resize_colors,
+    gradient_stops, mix_colors, normalize_colors, parse_direction, random_colors, resize_colors,
 )
 from generate.forms import GradientForm, style_from_query
 from generate.models import ColorPalette
@@ -266,9 +266,11 @@ class GradientStyleTests(TestCase):
                          'conic-gradient(from 90deg, #000000, #ffffff, #000000)')
 
     def test_style_from_query_falls_back_to_defaults(self):
-        self.assertEqual(style_from_query({'type': 'conic', 'angle': '360'}), ('conic', 360))
-        for query in [{}, {'type': 'diamond', 'angle': '361'}, {'type': 'Radial', 'angle': '-5'}, {'angle': '4.5'}]:
-            self.assertEqual(style_from_query(query), ('linear', 0), query)
+        self.assertEqual(style_from_query({'type': 'conic', 'angle': '360', 'interpolation': 'oklch'}),
+                         ('conic', 360, 'oklch'))
+        for query in [{}, {'type': 'diamond', 'angle': '361'}, {'type': 'Radial', 'angle': '-5'}, {'angle': '4.5'},
+                      {'interpolation': 'OKLCH'}, {'interpolation': 'hsl'}]:
+            self.assertEqual(style_from_query(query), ('linear', 0, 'srgb'), query)
 
     def test_page_uses_type_and_angle(self):
         query = {**color_data(BLUES[:2]), 'type': 'conic', 'angle': '90'}
@@ -315,6 +317,79 @@ class GradientStyleTests(TestCase):
                              fetch_redirect_response=False)
         response = self.client.get(reverse('get_saved_palette'))
         self.assertRedirects(response, reverse('get_palette', args=[palette.id]), fetch_redirect_response=False)
+
+
+class InterpolationTests(TestCase):
+    """CSS Color 4 colour interpolation: in oklab, in oklch, in hsl longer hue."""
+
+    def test_build_gradient_adds_the_space_after_the_direction(self):
+        colors = ['#ff0000', '#0000ff']
+        self.assertEqual(build_gradient(colors, '45deg', 'linear', 'oklch')[0],
+                         'linear-gradient(45deg in oklch, #ff0000, #0000ff)')
+        self.assertEqual(build_gradient(colors, 'to right', 'linear', 'oklab')[0],
+                         'linear-gradient(to right in oklab, #ff0000, #0000ff)')
+        self.assertEqual(build_gradient(colors, '0deg', 'radial', 'hsl-longer')[0],
+                         'radial-gradient(circle in hsl longer hue, #ff0000, #0000ff)')
+        self.assertEqual(build_gradient(colors, '90deg', 'conic', 'oklch')[0],
+                         'conic-gradient(from 90deg in oklch, #ff0000, #0000ff, #ff0000)')
+        self.assertEqual(build_gradient(colors, '45deg', 'linear', 'srgb')[0],
+                         'linear-gradient(45deg, #ff0000, #0000ff)')
+
+    def test_mix_colors_in_each_space(self):
+        self.assertEqual(mix_colors('#ff0000', '#0000ff', 0.5), '#800080')
+        self.assertEqual(mix_colors('#ffffff', '#000000', 0.5, 'oklab'), '#636363')
+        # Red to blue the long way round: through yellow, green and cyan
+        self.assertEqual([mix_colors('#ff0000', '#0000ff', t, 'hsl-longer') for t in (0.25, 0.5, 0.75)],
+                         ['#ffff00', '#00ff00', '#00ffff'])
+        for space in ('oklab', 'oklch', 'hsl-longer'):
+            self.assertEqual(mix_colors('#123456', '#abcdef', 0, space), '#123456', space)
+            self.assertEqual(mix_colors('#123456', '#abcdef', 1, space), '#abcdef', space)
+
+    def test_grey_takes_the_other_hue_in_oklch(self):
+        # Grey has no hue, so the blend keeps red's hue instead of swinging through another colour
+        middle = mix_colors('#808080', '#ff0000', 0.5, 'oklch')
+        r, g, b = (int(middle[i:i + 2], 16) for i in (1, 3, 5))
+        self.assertGreater(r, g + 50)
+        self.assertGreater(r, b + 50)
+
+    def test_gradient_stops(self):
+        self.assertEqual(gradient_stops(['#000000', '#ffffff']), [(0.0, '#000000'), (1.0, '#ffffff')])
+        stops = gradient_stops(['#ff0000', '#00ff00', '#0000ff'], 'oklch', steps=4)
+        self.assertEqual(len(stops), 9)
+        self.assertEqual(stops[0], (0.0, '#ff0000'))
+        self.assertEqual(stops[4], (0.5, '#00ff00'))
+        self.assertEqual(stops[-1], (1.0, '#0000ff'))
+
+    def test_page_uses_and_keeps_the_interpolation(self):
+        owner = User.objects.create_user('owner', password='pass12345')
+        palette = ColorPalette.objects.create(user=owner, colors=BLUES)
+        self.client.force_login(owner)
+        response = self.client.get(reverse('generate_gradient'), {**color_data(BLUES[:2]), 'interpolation': 'oklch'})
+        self.assertContains(response, f'linear-gradient(0deg in oklch, {BLUES[0]}, {BLUES[1]})')
+        self.assertContains(response, 'name="interpolation" value="oklch" checked')
+        self.assertContains(response, f'href="{reverse("get_palette", args=[palette.id])}?interpolation=oklch"')
+        self.assertContains(response, 'class="style-field" name="interpolation" value="oklch"', count=3)
+
+        response = self.client.post(reverse('generate_gradient'), {**color_data(BLUES[:2]), 'interpolation': 'hsl-longer'})
+        self.assertIn('interpolation=hsl-longer', response.url)
+
+    def test_api_interpolation(self):
+        query = {**color_data(['#ff0000', '#0000ff']), 'direction': 'to right'}
+        data = self.client.get(reverse('api_gradient'), query).json()
+        self.assertEqual((data['interpolation'], data['gradient']), ('srgb', 'linear-gradient(to right, #ff0000, #0000ff)'))
+        data = self.client.get(reverse('api_gradient'), {**query, 'interpolation': 'hsl-longer'}).json()
+        self.assertEqual(data['gradient'], 'linear-gradient(to right in hsl longer hue, #ff0000, #0000ff)')
+        css = self.client.get(reverse('api_gradient'), {**query, 'interpolation': 'oklab', 'format': 'css'})
+        self.assertEqual(css.content.decode(), 'background: linear-gradient(to right in oklab, #ff0000, #0000ff);\n')
+
+        svg = self.client.get(reverse('api_gradient'), {**query, 'interpolation': 'hsl-longer', 'format': 'svg'})
+        svg = svg.content.decode()
+        self.assertEqual(svg.count('<stop '), 17)
+        self.assertIn('<stop offset="0.5" stop-color="#00ff00"/>', svg)
+
+        response = self.client.get(reverse('api_gradient'), {'interpolation': 'lab'})
+        self.assertEqual(response.status_code, 400)
+        self.assertIn('interpolation', response.json())
 
 
 class DirectionTests(TestCase):

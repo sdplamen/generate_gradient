@@ -18,7 +18,7 @@ from rest_framework.renderers import BrowsableAPIRenderer, JSONRenderer
 from rest_framework.response import Response
 from rest_framework.views import APIView
 from generate.colors import (
-    DEFAULT_COLORS, DEFAULT_TYPE, DIRECTION, HEX_COLOR_RE, MAX_COLORS, MIN_COLORS, build_gradient, normalize_colors, random_colors,
+    DEFAULT_COLORS, DEFAULT_INTERPOLATION, DEFAULT_TYPE, DIRECTION, HEX_COLOR_RE, MAX_COLORS, MIN_COLORS, build_gradient, normalize_colors, random_colors,
     resize_colors,
 )
 from generate.forms import GradientForm, PaletteForm, style_from_query, style_params
@@ -105,7 +105,7 @@ get_palette = GradientGeneratorView.as_view()
 
 
 def with_style(url, query):
-    """`url` with the gradient style (type and angle) from `query` added, if it is not the default one."""
+    """`url` with the gradient style (type, angle and interpolation) from `query` added, if it is not the default one."""
     params = style_params(*style_from_query(query))
     return f'{url}?{urlencode(params)}' if params else url
 
@@ -167,11 +167,12 @@ class RegisterView(CreateView):
         return response
 
 
-def gradient_data(colors, direction=DIRECTION, gradient_type=DEFAULT_TYPE):
-    gradient, css_code = build_gradient(colors, direction, gradient_type)
+def gradient_data(colors, direction=DIRECTION, gradient_type=DEFAULT_TYPE, interpolation=DEFAULT_INTERPOLATION):
+    gradient, css_code = build_gradient(colors, direction, gradient_type, interpolation)
     return GradientSerializer({
         'type': gradient_type,
         'direction': direction,
+        'interpolation': interpolation,
         'colors': colors,
         'gradient': gradient,
         'css_code': css_code,
@@ -219,7 +220,9 @@ class GradientAPIView(APIView):
 
         colors = colors_from_query(request.query_params)
         colors = normalize_colors(colors) if colors else random_colors()
-        data = gradient_data(colors, query.validated_data['direction'], gradient_type)
+        data = gradient_data(
+            colors, query.validated_data['direction'], gradient_type, query.validated_data['interpolation'],
+        )
         return Response(data, status=status.HTTP_200_OK)
 
     @extend_schema(

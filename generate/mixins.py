@@ -1,7 +1,7 @@
 from urllib.parse import urlencode
 
 from django.core.paginator import Paginator
-from generate.colors import GRADIENT_TYPES, MAX_ANGLE, MAX_COLORS, MIN_COLORS, build_gradient, normalize_colors, random_colors
+from generate.colors import GRADIENT_TYPES, INTERPOLATION_LABELS, MAX_ANGLE, MAX_COLORS, MIN_COLORS, build_gradient, normalize_colors, random_colors
 from generate.forms import GradientForm, style_from_query, style_params
 from generate.models import ColorPalette
 
@@ -11,9 +11,9 @@ class GradientContextMixin:
 
     def get_gradient_context(self, request, colors=None, active_palette_id=None):
         colors = normalize_colors(colors) if colors else random_colors()
-        gradient_type, angle = style_from_query(request.GET)
+        gradient_type, angle, interpolation = style_from_query(request.GET)
         direction = f'{angle}deg'
-        gradient, css_code = build_gradient(colors, direction, gradient_type)
+        gradient, css_code = build_gradient(colors, direction, gradient_type, interpolation)
 
         saved_palettes_queryset = ColorPalette.objects.all().order_by('id')
         paginator = Paginator(saved_palettes_queryset, self.paginate_by)
@@ -27,8 +27,10 @@ class GradientContextMixin:
             'gradient_types': GRADIENT_TYPES,
             'angle': angle,
             'max_angle': MAX_ANGLE,
+            'interpolation': interpolation,
+            'interpolations': INTERPOLATION_LABELS.items(),
             # Added to links that leave this page (saved palettes, pagination), so they keep the gradient style
-            'style_query': urlencode(style_params(gradient_type, angle)),
+            'style_query': urlencode(style_params(gradient_type, angle, interpolation)),
             'css_code': css_code,
             'colors': colors,
             'color_counts': range(MIN_COLORS, MAX_COLORS + 1),

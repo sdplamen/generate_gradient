@@ -75,25 +75,154 @@ function cancelLongPress() {
 document.addEventListener('touchend', cancelLongPress, { passive: true });
 document.addEventListener('touchcancel', cancelLongPress, { passive: true });
 
-// The gradient as it is set on the page now: colours (color1 first), type and angle, including changes not yet applied
+// The gradient as it is set on the page now: colours (color1 first), type, angle and colour interpolation,
+// including changes not yet applied
 function currentGradient() {
     const colors = [...document.querySelectorAll('.color-input-form input[type="color"]')].map(input => input.value);
     const typeInput = document.querySelector('.type-picker input[name="type"]:checked');
     const angleInput = document.getElementById('angle-input');
+    const interpolationInput = document.querySelector('.interpolation-picker input[name="interpolation"]:checked');
     return {
         colors,
         type: typeInput ? typeInput.value : 'linear',
         angle: angleInput ? Number(angleInput.value) : 0,
+        interpolation: interpolationInput ? interpolationInput.value : 'srgb',
     };
 }
 
+// CSS Color 4 interpolation, as INTERPOLATIONS in colors.py: sRGB is the classic blend and adds nothing to the CSS
+const INTERPOLATIONS = {
+    srgb: '',
+    oklab: 'in oklab',
+    oklch: 'in oklch',
+    'hsl-longer': 'in hsl longer hue',
+};
+
 // Same CSS as build_gradient in colors.py: radial spreads from the centre, conic closes the circle on its first colour
-function gradientCss({ colors, type, angle }) {
+function gradientCss({ colors, type, angle, interpolation }) {
     const stops = colors.join(', ');
-    if (type === 'radial') return `radial-gradient(circle, ${stops})`;
-    if (type === 'conic') return `conic-gradient(from ${angle}deg, ${stops}, ${colors[0]})`;
-    return `linear-gradient(${angle}deg, ${stops})`;
+    const space = INTERPOLATIONS[interpolation] ? ` ${INTERPOLATIONS[interpolation]}` : '';
+    if (type === 'radial') return `radial-gradient(circle${space}, ${stops})`;
+    if (type === 'conic') return `conic-gradient(from ${angle}deg${space}, ${stops}, ${colors[0]})`;
+    return `linear-gradient(${angle}deg${space}, ${stops})`;
 }
+
+// SVG only blends in sRGB, so other spaces are drawn with extra stops sampled in that space (gradient_stops in colors.py)
+const ColorSpaces = (() => {
+    const SVG_STEPS = 16;
+    const POWERLESS_HUE = 1e-4;
+    const HUE_INDEX = { oklch: 2, 'hsl-longer': 0 };
+
+    const toRgb = hex => [1, 3, 5].map(i => parseInt(hex.slice(i, i + 2), 16) / 255);
+    const toHex = rgb => '#' + rgb.map(c => Math.round(Math.min(Math.max(c, 0), 1) * 255).toString(16).padStart(2, '0')).join('');
+    const toLinear = c => (c <= 0.04045 ? c / 12.92 : ((c + 0.055) / 1.055) ** 2.4);
+    const fromLinear = c => (c <= 0.0031308 ? 12.92 * c : 1.055 * Math.sign(c) * Math.abs(c) ** (1 / 2.4) - 0.055);
+
+    // OKLab matrices from Björn Ottosson, https://bottosson.github.io/posts/oklab/
+    function toOklab(hex) {
+        const [r, g, b] = toRgb(hex).map(toLinear);
+        const l = Math.cbrt(0.4122214708 * r + 0.5363325363 * g + 0.0514459929 * b);
+        const m = Math.cbrt(0.2119034982 * r + 0.6806995451 * g + 0.1073969566 * b);
+        const s = Math.cbrt(0.0883024619 * r + 0.2817188376 * g + 0.6299787005 * b);
+        return [
+            0.2104542553 * l + 0.7936177850 * m - 0.0040720468 * s,
+            1.9779984951 * l - 2.4285922050 * m + 0.4505937099 * s,
+            0.0259040371 * l + 0.7827717662 * m - 0.8086757660 * s,
+        ];
+    }
+
+    function fromOklab([L, a, b]) {
+        const l = (L + 0.3963377774 * a + 0.2158037573 * b) ** 3;
+        const m = (L - 0.1055613458 * a - 0.0638541728 * b) ** 3;
+        const s = (L - 0.0894841775 * a - 1.2914855480 * b) ** 3;
+        return toHex([
+            4.0767416621 * l - 3.3077115913 * m + 0.2309699292 * s,
+            -1.2684380046 * l + 2.6097574011 * m - 0.3413193965 * s,
+            -0.0041960863 * l - 0.7034186147 * m + 1.7076147010 * s,
+        ].map(fromLinear));
+    }
+
+    // [hue in degrees or null for greys, saturation, lightness]
+    function toHsl(hex) {
+        const [r, g, b] = toRgb(hex);
+        const max = Math.max(r, g, b);
+        const min = Math.min(r, g, b);
+        const l = (max + min) / 2;
+        const d = max - min;
+        if (d === 0) return [null, 0, l];
+        const s = l <= 0.5 ? d / (max + min) : d / (2 - max - min);
+        let h;
+        if (max === r) h = ((g - b) / d) % 6;
+        else if (max === g) h = (b - r) / d + 2;
+        else h = (r - g) / d + 4;
+        return [s > POWERLESS_HUE ? ((h * 60) + 360) % 360 : null, s, l];
+    }
+
+    function fromHsl([h, s, l]) {
+        const hue = ((h % 360) + 360) % 360;
+        const k = n => (n + hue / 30) % 12;
+        const a = s * Math.min(l, 1 - l);
+        const f = n => l - a * Math.max(-1, Math.min(k(n) - 3, 9 - k(n), 1));
+        return toHex([f(0), f(8), f(4)]);
+    }
+
+    function toSpace(hex, space) {
+        if (space === 'hsl-longer') return toHsl(hex);
+        const [L, a, b] = toOklab(hex);
+        if (space !== 'oklch') return [L, a, b];
+        const c = Math.hypot(a, b);
+        return [L, c, c > POWERLESS_HUE ? ((Math.atan2(b, a) * 180 / Math.PI) + 360) % 360 : null];
+    }
+
+    function fromSpace(values, space) {
+        if (space === 'hsl-longer') return fromHsl(values);
+        if (space !== 'oklch') return fromOklab(values);
+        const [L, c, h] = values;
+        const radians = h * Math.PI / 180;
+        return fromOklab([L, c * Math.cos(radians), c * Math.sin(radians)]);
+    }
+
+    // CSS Color 4 hue fix-up; a grey's hue is missing, so it takes the other colour's hue
+    function huePair(start, end, longer) {
+        if (start === null || end === null) {
+            const hue = (start === null ? end : start) || 0;
+            return [hue, hue];
+        }
+        const delta = end - start;
+        if (longer) {
+            if (delta > 0 && delta < 180) start += 360;
+            else if (delta > -180 && delta <= 0) end += 360;
+        } else if (delta > 180) start += 360;
+        else if (delta < -180) end += 360;
+        return [start, end];
+    }
+
+    function mix(start, end, t, space) {
+        const a = toSpace(start, space);
+        const b = toSpace(end, space);
+        if (space in HUE_INDEX) {
+            const i = HUE_INDEX[space];
+            [a[i], b[i]] = huePair(a[i], b[i], space === 'hsl-longer');
+        }
+        return fromSpace(a.map((value, i) => value + (b[i] - value) * t), space);
+    }
+
+    // [offset 0–1, colour] pairs that draw the gradient with plain sRGB blending
+    function stops(colors, space) {
+        const last = colors.length - 1;
+        if (!INTERPOLATIONS[space]) return colors.map((color, i) => [i / last, color]);
+        const result = [];
+        for (let i = 0; i < last; i++) {
+            for (let k = 0; k < SVG_STEPS; k++) {
+                result.push([(i + k / SVG_STEPS) / last, mix(colors[i], colors[i + 1], k / SVG_STEPS, space)]);
+            }
+        }
+        result.push([1, colors[last]]);
+        return result;
+    }
+
+    return { stops };
+})();
 
 const round = value => Math.round(value * 100) / 100;
 
@@ -105,13 +234,13 @@ const EXPORT_FORMATS = {
     tailwind: gradient => `bg-[${gradientCss(gradient).replace(/, /g, ',').replace(/ /g, '_')}]`,
 
     // SVG has no conic gradients, so this format is switched off for them
-    svg: ({ colors, type, angle }) => {
+    svg: ({ colors, type, angle, interpolation }) => {
         const width = 800;
         const height = 600;
         const cx = width / 2;
         const cy = height / 2;
-        const stops = colors.map((color, i) =>
-            `      <stop offset="${Math.round((i / (colors.length - 1)) * 100)}%" stop-color="${color}"/>`
+        const stops = ColorSpaces.stops(colors, interpolation).map(([offset, color]) =>
+            `      <stop offset="${round(offset * 100)}%" stop-color="${color}"/>`
         ).join('\n');
 
         let open;
@@ -142,8 +271,8 @@ const EXPORT_FORMATS = {
         ].join('\n');
     },
 
-    json: ({ colors, type, angle }) =>
-        JSON.stringify(type === 'radial' ? { type, colors } : { type, angle, colors }, null, 2),
+    json: ({ colors, type, angle, interpolation }) =>
+        JSON.stringify(type === 'radial' ? { type, interpolation, colors } : { type, angle, interpolation, colors }, null, 2),
 
     hex: ({ colors }) => colors.join(', '),
 };
@@ -365,9 +494,10 @@ document.addEventListener('DOMContentLoaded', () => {
     const angleValue = document.getElementById('angle-value');
 
     // Same as style_params in forms.py: defaults are left out of URLs
-    function setStyleParams(params, { type, angle }) {
+    function setStyleParams(params, { type, angle, interpolation }) {
         if (type === 'linear') params.delete('type'); else params.set('type', type);
         if (angle === 0) params.delete('angle'); else params.set('angle', String(angle));
+        if (interpolation === 'srgb') params.delete('interpolation'); else params.set('interpolation', interpolation);
     }
 
     function update() {
@@ -380,7 +510,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
         // Random Colors, Random Saved Palettes and Save Palette send the style along
         document.querySelectorAll('.style-field').forEach(field => {
-            field.value = field.name === 'type' ? gradient.type : String(gradient.angle);
+            field.value = String(gradient[field.name]);
         });
         // Saved palette and page links keep it too
         document.querySelectorAll('a.keeps-style').forEach(link => {
@@ -397,7 +527,7 @@ document.addEventListener('DOMContentLoaded', () => {
     }
 
     angleInput.addEventListener('input', update);
-    document.querySelectorAll('.type-picker input[name="type"]').forEach(radio => {
+    document.querySelectorAll('.type-picker input[name="type"], .interpolation-picker input[name="interpolation"]').forEach(radio => {
         radio.addEventListener('change', update);
     });
     document.querySelectorAll('.color-input-form input[type="color"]').forEach(input => {

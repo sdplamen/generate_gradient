@@ -1,4 +1,5 @@
 import colorsys
+import math
 import random
 import re
 
@@ -25,6 +26,21 @@ DEFAULT_TYPE = 'linear'
 # The web page's angle slider runs from 0 to 360 degrees; 0 points up, like DIRECTION
 MAX_ANGLE = 360
 DEFAULT_ANGLE = 0
+
+# CSS Color 4 colour interpolation: how the browser blends between the stops. 'srgb' is the classic blend and
+# adds nothing to the CSS; the others add an "in <space>" clause after the direction
+INTERPOLATIONS = {
+    'srgb': '',
+    'oklab': 'in oklab',
+    'oklch': 'in oklch',
+    'hsl-longer': 'in hsl longer hue',
+}
+INTERPOLATION_LABELS = {'srgb': 'sRGB', 'oklab': 'OKLab', 'oklch': 'OKLCH', 'hsl-longer': 'HSL longer hue'}
+DEFAULT_INTERPOLATION = 'srgb'
+# SVG can only blend in sRGB, so other spaces are drawn with this many stops between each pair of colours
+SVG_STEPS = 16
+# Below this chroma (OKLCH) or saturation (HSL) a colour is grey and its hue does not count
+POWERLESS_HUE = 1e-4
 
 # Share of random gradients taken from the curated palettes; the rest are generated on the colour wheel
 CURATED_SHARE = 0.7
@@ -192,17 +208,130 @@ def direction_angle(direction):
     return int(direction.removesuffix('deg'))
 
 
-def build_gradient(colors, direction=DIRECTION, gradient_type=DEFAULT_TYPE):
+def build_gradient(colors, direction=DIRECTION, gradient_type=DEFAULT_TYPE, interpolation=DEFAULT_INTERPOLATION):
     """The CSS gradient and its `background:` declaration.
 
     `direction` is one returned by parse_direction. Radial gradients ignore it (they spread out from the centre);
     conic ones start at its angle and end on the first colour again, so the sweep has no hard seam.
+    `interpolation` is one of INTERPOLATIONS; anything but sRGB adds its "in <space>" clause.
     """
     stops = ', '.join(colors)
+    space = f' {INTERPOLATIONS[interpolation]}' if INTERPOLATIONS.get(interpolation) else ''
     if gradient_type == 'radial':
-        gradient = f'radial-gradient(circle, {stops})'
+        gradient = f'radial-gradient(circle{space}, {stops})'
     elif gradient_type == 'conic':
-        gradient = f'conic-gradient(from {direction_angle(direction)}deg, {stops}, {colors[0]})'
+        gradient = f'conic-gradient(from {direction_angle(direction)}deg{space}, {stops}, {colors[0]})'
     else:
-        gradient = f'linear-gradient({direction}, {stops})'
+        gradient = f'linear-gradient({direction}{space}, {stops})'
     return gradient, f'background: {gradient};'
+
+
+# Colour spaces for drawing CSS Color 4 interpolation where only sRGB blending exists (SVG).
+# OKLab matrices from Björn Ottosson, https://bottosson.github.io/posts/oklab/
+
+def _to_linear(channel):
+    return channel / 12.92 if channel <= 0.04045 else ((channel + 0.055) / 1.055) ** 2.4
+
+
+def _from_linear(channel):
+    return 12.92 * channel if channel <= 0.0031308 else 1.055 * channel ** (1 / 2.4) - 0.055
+
+
+def _to_oklab(color):
+    r, g, b = (_to_linear(c / 255) for c in _to_rgb(color))
+    l = (0.4122214708 * r + 0.5363325363 * g + 0.0514459929 * b) ** (1 / 3)
+    m = (0.2119034982 * r + 0.6806995451 * g + 0.1073969566 * b) ** (1 / 3)
+    s = (0.0883024619 * r + 0.2817188376 * g + 0.6299787005 * b) ** (1 / 3)
+    return (
+        0.2104542553 * l + 0.7936177850 * m - 0.0040720468 * s,
+        1.9779984951 * l - 2.4285922050 * m + 0.4505937099 * s,
+        0.0259040371 * l + 0.7827717662 * m - 0.8086757660 * s,
+    )
+
+
+def _from_oklab(lightness, a, b):
+    l = (lightness + 0.3963377774 * a + 0.2158037573 * b) ** 3
+    m = (lightness - 0.1055613458 * a - 0.0638541728 * b) ** 3
+    s = (lightness - 0.0894841775 * a - 1.2914855480 * b) ** 3
+    return (
+        4.0767416621 * l - 3.3077115913 * m + 0.2309699292 * s,
+        -1.2684380046 * l + 2.6097574011 * m - 0.3413193965 * s,
+        -0.0041960863 * l - 0.7034186147 * m + 1.7076147010 * s,
+    )
+
+
+def _from_unit_rgb(r, g, b):
+    """#rrggbb from 0–1 channels, clipping colours outside sRGB."""
+    return _to_hex(*(round(min(max(c, 0), 1) * 255) for c in (r, g, b)))
+
+
+def _to_space(color, interpolation):
+    """The colour's components in the interpolation space; a hue is None when it does not count (greys)."""
+    if interpolation == 'hsl-longer':
+        hue, lightness, saturation = colorsys.rgb_to_hls(*(c / 255 for c in _to_rgb(color)))
+        return [hue * 360 if saturation > POWERLESS_HUE else None, saturation, lightness]
+    lightness, a, b = _to_oklab(color)
+    if interpolation == 'oklch':
+        chroma = math.hypot(a, b)
+        return [lightness, chroma, math.degrees(math.atan2(b, a)) % 360 if chroma > POWERLESS_HUE else None]
+    return [lightness, a, b]
+
+
+def _from_space(values, interpolation):
+    if interpolation == 'hsl-longer':
+        hue, saturation, lightness = values
+        return _from_unit_rgb(*colorsys.hls_to_rgb(hue / 360 % 1, lightness, saturation))
+    if interpolation == 'oklch':
+        lightness, chroma, hue = values
+        values = [lightness, chroma * math.cos(math.radians(hue)), chroma * math.sin(math.radians(hue))]
+    return _from_unit_rgb(*(_from_linear(c) for c in _from_oklab(*values)))
+
+
+def _hue_pair(start, end, longer):
+    """Start and end hue fixed up the way CSS Color 4 does for "shorter hue" or "longer hue".
+
+    A grey's hue is missing, so it takes the other colour's hue and the blend does not turn the wheel.
+    """
+    if start is None or end is None:
+        hue = end if start is None else start
+        return (hue or 0,) * 2
+    delta = end - start
+    if longer:
+        if 0 < delta < 180:
+            start += 360
+        elif -180 < delta <= 0:
+            end += 360
+    elif delta > 180:
+        start += 360
+    elif delta < -180:
+        end += 360
+    return start, end
+
+
+HUE_INDEX = {'oklch': 2, 'hsl-longer': 0}
+
+
+def mix_colors(start, end, fraction, interpolation=DEFAULT_INTERPOLATION):
+    """The colour `fraction` (0–1) of the way from `start` to `end`, blended the way CSS does in `interpolation`."""
+    if interpolation not in HUE_INDEX and interpolation != 'oklab':
+        return _to_hex(*(round(a + (b - a) * fraction) for a, b in zip(_to_rgb(start), _to_rgb(end))))
+    a, b = _to_space(start, interpolation), _to_space(end, interpolation)
+    if interpolation in HUE_INDEX:
+        i = HUE_INDEX[interpolation]
+        a[i], b[i] = _hue_pair(a[i], b[i], longer=interpolation == 'hsl-longer')
+    return _from_space([x + (y - x) * fraction for x, y in zip(a, b)], interpolation)
+
+
+def gradient_stops(colors, interpolation=DEFAULT_INTERPOLATION, steps=SVG_STEPS):
+    """(offset 0–1, colour) stops that draw the gradient with plain sRGB blending.
+
+    sRGB needs only the colours themselves; other spaces get `steps` stops per pair of colours, sampled in that space.
+    """
+    last = len(colors) - 1
+    if INTERPOLATIONS.get(interpolation, '') == '':
+        return [(i / last, color) for i, color in enumerate(colors)]
+    stops = [
+        ((i + k / steps) / last, mix_colors(colors[i], colors[i + 1], k / steps, interpolation))
+        for i in range(last) for k in range(steps)
+    ]
+    return stops + [(1.0, colors[-1])]
