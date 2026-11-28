@@ -76,12 +76,12 @@ class GradientGeneratorView(View, GradientContextMixin):
     template_name = 'index.html'
 
     def get(self, request, palette_id=None):
-        if palette_id:
-            colors = get_object_or_404(ColorPalette, id=palette_id).colors
-        else:
-            colors = colors_from_query(request.GET)
+        palette = get_object_or_404(ColorPalette, id=palette_id) if palette_id else None
+        colors = palette.colors if palette else colors_from_query(request.GET)
 
         context = self.get_gradient_context(request, colors, active_palette_id=palette_id)
+        # An open saved palette's name fills the Save Palette name box, instead of the "Name (optional)" hint
+        context['palette_name'] = palette.name if palette else ''
         context['locked_slots'] = locked_slots_from_query(request.GET, context['colors'])
         return render(request, self.template_name, context)
 

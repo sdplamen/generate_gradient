@@ -230,6 +230,15 @@ class GradientPageTests(TestCase):
         self.assertContains(response, 'Palette 2</span>')
         self.assertNotContains(response, 'Palette 1</span>')
 
+    def test_open_palette_fills_the_save_name_box(self):
+        self.client.force_login(self.owner)
+        named = ColorPalette.objects.create(user=self.owner, colors=BLUES[:2], name='Ocean <b>')
+        unnamed = ColorPalette.objects.create(user=self.owner, colors=BLUES[:2])
+        response = self.client.get(reverse('get_palette', args=[named.id]))
+        self.assertContains(response, 'class="palette-name-input" value="Ocean &lt;b&gt;"')
+        for response in (self.client.get(reverse('get_palette', args=[unnamed.id])), self.client.get(reverse('generate_gradient'))):
+            self.assertContains(response, 'class="palette-name-input" value="" placeholder="Name (optional)"')
+
     def test_owner_can_rename_palette(self):
         palette = ColorPalette.objects.create(user=self.owner, colors=BLUES, name='Old')
         self.client.force_login(self.owner)

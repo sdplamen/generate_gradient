@@ -22,7 +22,7 @@
                     <input type="hidden" name="color{{ forloop.counter }}" value="{{ color }}">
                 {% endfor %}
                 {% if gradient_type %}<input type="hidden" class="style-field" name="type" value="{{ gradient_type }}"><input type="hidden" class="style-field" name="angle" value="{{ angle }}"><input type="hidden" class="style-field" name="interpolation" value="{{ interpolation }}"><input type="hidden" class="style-field" name="easing" value="{{ easing }}">{% endif %}
-                <input type="text" name="name" maxlength="40" class="palette-name-input" placeholder="Name (optional)" aria-label="Palette name (optional)">
+                <input type="text" name="name" maxlength="40" class="palette-name-input" value="{{ palette_name }}" placeholder="Name (optional)" aria-label="Palette name (optional)">
                 <button class="nav-btn" id="save-palette-btn"{% for message in messages %}{% if 'palette-saved' in message.tags %} data-saved="true"{% endif %}{% endfor %}>Save Palette</button>
             </form>
         {% else %}
