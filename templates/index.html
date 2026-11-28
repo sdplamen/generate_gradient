@@ -6,9 +6,56 @@
     {% if message.level_tag == 'error' %}<p class="form-error">{{ message }}</p>{% endif %}
 {% endfor %}
 <section class="container">
-    <div class="gradient-box" style="{{ css_code }}"></div>
+    <div class="preview-column">
+        <div class="gradient-box" style="{{ css_code }}"></div>
+        {# Outside the form, under the preview; form="gradient-form" still sends these with Update Gradient #}
+        <div class="gradient-settings">
+            <fieldset class="count-picker">
+                <legend>Number of colours:</legend>
+                {% for count in color_counts %}
+                <label>
+                    <input type="radio" form="gradient-form" name="count" value="{{ count }}"{% if count == colors|length %} checked{% endif %}>
+                    <span>{{ count }}</span>
+                </label>
+                {% endfor %}
+            </fieldset>
+            <fieldset class="count-picker type-picker">
+                <legend>Gradient Type:</legend>
+                {% for type in gradient_types %}
+                <label>
+                    <input type="radio" form="gradient-form" name="type" value="{{ type }}"{% if type == gradient_type %} checked{% endif %}>
+                    <span>{{ type|capfirst }}</span>
+                </label>
+                {% endfor %}
+            </fieldset>
+            <fieldset class="count-picker interpolation-picker">
+                <legend>Colour Interpolation:</legend>
+                {% for value, label in interpolations %}
+                <label>
+                    <input type="radio" form="gradient-form" name="interpolation" value="{{ value }}"{% if value == interpolation %} checked{% endif %}>
+                    <span>{{ label }}</span>
+                </label>
+                {% endfor %}
+            </fieldset>
+            <fieldset class="count-picker easing-picker">
+                <legend>Easing:</legend>
+                {% for value, label in easings %}
+                <label>
+                    <input type="radio" form="gradient-form" name="easing" value="{{ value }}"{% if value == easing %} checked{% endif %}>
+                    <span>{{ label }}</span>
+                </label>
+                {% endfor %}
+            </fieldset>
+            {# Hidden, not disabled, for radial gradients, so the angle is still sent and comes back when switching back #}
+            <div class="angle-control"{% if gradient_type == 'radial' %} hidden{% endif %}>
+                <label for="angle-input" id="angle-label">{% if gradient_type == 'conic' %}Gradient Start Angle:{% else %}Gradient Angle:{% endif %}</label>
+                <input type="range" id="angle-input" name="angle" form="gradient-form" min="0" max="{{ max_angle }}" step="1" value="{{ angle }}">
+                <output for="angle-input" id="angle-value">{{ angle }}°</output>
+            </div>
+        </div>
+    </div>
     <div class="controls">
-        <form method="GET" action="{% url 'generate_gradient' %}" class="color-input-form">
+        <form method="GET" action="{% url 'generate_gradient' %}" class="color-input-form" id="gradient-form">
             <div class="color-fields">
             {% for field in form %}
                 <div class="color-field">
@@ -27,50 +74,6 @@
                     </div>
                 </div>
             {% endfor %}
-            </div>
-            <div class="gradient-settings">
-                <fieldset class="count-picker">
-                    <legend>Number of colours:</legend>
-                    {% for count in color_counts %}
-                    <label>
-                        <input type="radio" name="count" value="{{ count }}"{% if count == colors|length %} checked{% endif %}>
-                        <span>{{ count }}</span>
-                    </label>
-                    {% endfor %}
-                </fieldset>
-                <fieldset class="count-picker type-picker">
-                    <legend>Gradient Type:</legend>
-                    {% for type in gradient_types %}
-                    <label>
-                        <input type="radio" name="type" value="{{ type }}"{% if type == gradient_type %} checked{% endif %}>
-                        <span>{{ type|capfirst }}</span>
-                    </label>
-                    {% endfor %}
-                </fieldset>
-                <fieldset class="count-picker interpolation-picker">
-                    <legend>Colour Interpolation:</legend>
-                    {% for value, label in interpolations %}
-                    <label>
-                        <input type="radio" name="interpolation" value="{{ value }}"{% if value == interpolation %} checked{% endif %}>
-                        <span>{{ label }}</span>
-                    </label>
-                    {% endfor %}
-                </fieldset>
-                <fieldset class="count-picker easing-picker">
-                    <legend>Easing:</legend>
-                    {% for value, label in easings %}
-                    <label>
-                        <input type="radio" name="easing" value="{{ value }}"{% if value == easing %} checked{% endif %}>
-                        <span>{{ label }}</span>
-                    </label>
-                    {% endfor %}
-                </fieldset>
-                {# Hidden, not disabled, for radial gradients, so the angle is still sent and comes back when switching back #}
-                <div class="angle-control"{% if gradient_type == 'radial' %} hidden{% endif %}>
-                    <label for="angle-input" id="angle-label">{% if gradient_type == 'conic' %}Gradient Start Angle:{% else %}Gradient Angle:{% endif %}</label>
-                    <input type="range" id="angle-input" name="angle" min="0" max="{{ max_angle }}" step="1" value="{{ angle }}">
-                    <output for="angle-input" id="angle-value">{{ angle }}°</output>
-                </div>
             </div>
             <input type="hidden" name="lock" id="lock-input" value="{{ locked_slots|join:',' }}">
             <div class="form-buttons">

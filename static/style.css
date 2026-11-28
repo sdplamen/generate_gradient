@@ -658,8 +658,8 @@ button:hover {
     cursor: pointer;
 }
 
-/* Undo the full-width colour-input styling for the radios */
-.controls .color-input-form .count-picker input[type="radio"] {
+/* Native radios, sized to sit inline with their labels */
+.gradient-settings .count-picker input[type="radio"] {
     width: 16px;
     height: 16px;
     margin: 0;
@@ -757,8 +757,13 @@ button:hover {
     font-variant-numeric: tabular-nums;
 }
 
-/* Undo the full-width colour-input styling, then draw the track and thumb */
-.controls .color-input-form .angle-control input[type="range"] {
+/* A plain range input with a custom track and thumb */
+.gradient-settings .angle-control input[type="range"] {
+    -webkit-appearance: none;
+    -moz-appearance: none;
+    appearance: none;
+    padding: 0;
+    border: none;
     flex: 1;
     min-width: 0;
     height: 24px;
@@ -803,7 +808,27 @@ button:hover {
     border-radius: 4px;
 }
 
-/* Number of colours, Gradient Type and Gradient Angle sit between the colours and the buttons */
+/* The gradient box with its settings (colours, type, interpolation, easing, angle) underneath */
+.preview-column {
+    display: flex;
+    flex-direction: column;
+}
+
+/* The preview column and the controls share the row equally, whatever is in them */
+.container > .preview-column,
+.container > .controls {
+    flex: 1 1 0;
+    min-width: 0;
+}
+
+@media (max-width: 800px) {
+    /* Stacked on small screens: preview with its settings first, then the colours and buttons */
+    .container > .preview-column,
+    .container > .controls {
+        flex-basis: 100%;
+    }
+}
+
 .gradient-settings {
     margin-top: 15px;
 }
