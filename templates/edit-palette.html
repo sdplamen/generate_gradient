@@ -4,7 +4,7 @@
 <section class="edit-palette-page">
     <header class="header-title">
         <h2>Edit Palette</h2>
-        <p>Update the color scheme for<br>{{ object.display_name }} | Colors: {{ object.colors|join:", " }}.</p>
+        <p>Update the color scheme for {{ object.display_name }}.</p>
     </header>
     <div class="controls">
         <form action="{% url 'edit-palette' object.pk %}" method="post" class="color-input-form">

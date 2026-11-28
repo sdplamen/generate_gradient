@@ -247,7 +247,8 @@ class GradientPageTests(TestCase):
         self.client.force_login(self.owner)
         response = self.client.get(reverse('edit-palette', args=[palette.id]))
         self.assertContains(response, 'type="color"', count=3)
-        self.assertContains(response, 'Palette 1 | Colors')
+        self.assertContains(response, 'Update the color scheme for Palette 1.')
+        self.assertNotContains(response, '| Colors')
 
 
 class GradientStyleTests(TestCase):
