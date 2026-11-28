@@ -239,6 +239,46 @@ class GradientPageTests(TestCase):
         for response in (self.client.get(reverse('get_palette', args=[unnamed.id])), self.client.get(reverse('generate_gradient'))):
             self.assertContains(response, 'class="palette-name-input" value="" placeholder="Name (optional)"')
 
+    def test_save_on_own_open_palette_updates_it(self):
+        palette = ColorPalette.objects.create(user=self.owner, colors=BLUES[:2], name='Old')
+        self.client.force_login(self.owner)
+        response = self.client.get(reverse('get_palette', args=[palette.id]))
+        self.assertContains(response, f'action="{reverse("get_palette", args=[palette.id])}" class="nav-form save-form-nav"')
+        self.assertContains(response, f'formaction="{reverse("delete-palette", args=[palette.id])}"')
+
+        response = self.client.post(reverse('get_palette', args=[palette.id]),
+                                    {**color_data(REDS[:3]), 'name': 'New', 'type': 'radial'})
+        self.assertRedirects(response, f'{reverse("get_palette", args=[palette.id])}?type=radial',
+                             fetch_redirect_response=False)
+        palette.refresh_from_db()
+        self.assertEqual((palette.name, palette.colors), ('New', REDS[:3]))
+        self.assertEqual(ColorPalette.objects.count(), 1)
+
+    def test_others_cannot_update_and_see_no_delete(self):
+        palette = ColorPalette.objects.create(user=self.owner, colors=BLUES[:2], name='Mine')
+        self.client.force_login(self.other)
+        response = self.client.get(reverse('get_palette', args=[palette.id]))
+        self.assertNotContains(response, 'delete-palette-btn')
+        self.assertContains(response, f'action="{reverse("generate_gradient")}" class="nav-form save-form-nav"')
+        response = self.client.post(reverse('get_palette', args=[palette.id]), {**color_data(REDS[:2]), 'name': 'Taken'})
+        self.assertEqual(response.status_code, 404)
+        palette.refresh_from_db()
+        self.assertEqual((palette.name, palette.colors), ('Mine', BLUES[:2]))
+
+    def test_delete_button_removes_the_palette(self):
+        palette = ColorPalette.objects.create(user=self.owner, colors=BLUES[:2])
+        self.client.force_login(self.owner)
+        response = self.client.post(reverse('delete-palette', args=[palette.id]), {**color_data(BLUES[:2]), 'name': ''})
+        self.assertRedirects(response, reverse('generate_gradient'), fetch_redirect_response=False)
+        self.assertFalse(ColorPalette.objects.exists())
+
+    def test_saved_palettes_list_has_no_edit_or_delete_links(self):
+        palette = ColorPalette.objects.create(user=self.owner, colors=BLUES[:2])
+        self.client.force_login(self.owner)
+        response = self.client.get(reverse('generate_gradient'))
+        self.assertNotContains(response, reverse('edit-palette', args=[palette.id]))
+        self.assertNotContains(response, reverse('delete-palette', args=[palette.id]))
+
     def test_owner_can_rename_palette(self):
         palette = ColorPalette.objects.create(user=self.owner, colors=BLUES, name='Old')
         self.client.force_login(self.owner)

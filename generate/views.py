@@ -82,20 +82,30 @@ class GradientGeneratorView(View, GradientContextMixin):
         context = self.get_gradient_context(request, colors, active_palette_id=palette_id)
         # An open saved palette's name fills the Save Palette name box, instead of the "Name (optional)" hint
         context['palette_name'] = palette.name if palette else ''
+        # Your own open palette: Save Palette updates it, and Delete appears next to it
+        context['own_palette'] = palette if palette and palette.user_id == request.user.id else None
         context['locked_slots'] = locked_slots_from_query(request.GET, context['colors'])
         return render(request, self.template_name, context)
 
-    def post(self, request):
+    def post(self, request, palette_id=None):
+        """Save the colours as a new palette, or, posted to one of your own palettes, update it."""
         if not request.user.is_authenticated:
             return redirect('login')
 
+        palette = get_object_or_404(ColorPalette, id=palette_id, user=request.user) if palette_id else None
         form = PaletteForm(request.POST)
         if not form.is_valid():
             messages.error(request, 'Palette not saved: the colours or name were not valid.')
-            return redirect('generate_gradient')
+            return redirect('get_palette', palette_id=palette.id) if palette else redirect('generate_gradient')
+
+        messages.success(request, 'Palette saved', extra_tags='palette-saved')
+        if palette:
+            palette.colors = form.colors
+            palette.name = form.cleaned_data['name']
+            palette.save()
+            return redirect(with_style(reverse('get_palette', args=[palette.id]), request.POST))
 
         ColorPalette.objects.create(user=request.user, colors=form.colors, name=form.cleaned_data['name'])
-        messages.success(request, 'Palette saved', extra_tags='palette-saved')
         query = {**GradientForm.initial_for(form.colors), **style_params(*style_from_query(request.POST))}
         return redirect(f'{reverse("generate_gradient")}?{urlencode(query)}')
 

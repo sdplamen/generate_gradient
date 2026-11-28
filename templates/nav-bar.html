@@ -16,7 +16,8 @@
         </li>
         <li class="save-palettes">
         {% if user.is_authenticated %}
-            <form method="POST" action="{% url 'generate_gradient' %}" class="nav-form save-form-nav">
+            {# On your own open palette, Save Palette updates it and Delete removes it #}
+            <form method="POST" action="{% if own_palette %}{% url 'get_palette' own_palette.id %}{% else %}{% url 'generate_gradient' %}{% endif %}" class="nav-form save-form-nav">
                 {% csrf_token %}
                 {% for color in colors %}
                     <input type="hidden" name="color{{ forloop.counter }}" value="{{ color }}">
@@ -24,6 +25,7 @@
                 {% if gradient_type %}<input type="hidden" class="style-field" name="type" value="{{ gradient_type }}"><input type="hidden" class="style-field" name="angle" value="{{ angle }}"><input type="hidden" class="style-field" name="interpolation" value="{{ interpolation }}"><input type="hidden" class="style-field" name="easing" value="{{ easing }}">{% endif %}
                 <input type="text" name="name" maxlength="40" class="palette-name-input" value="{{ palette_name }}" placeholder="Name (optional)" aria-label="Palette name (optional)">
                 <button class="nav-btn" id="save-palette-btn"{% for message in messages %}{% if 'palette-saved' in message.tags %} data-saved="true"{% endif %}{% endfor %}>Save Palette</button>
+                {% if own_palette %}<button class="nav-btn delete-palette-btn" id="delete-palette-btn" formaction="{% url 'delete-palette' own_palette.pk %}" formnovalidate data-name="{{ own_palette.display_name }}">Delete</button>{% endif %}
             </form>
         {% else %}
             <p class="login-info">Log in to save palette</p>

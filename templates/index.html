@@ -97,10 +97,6 @@
                                 <a class="palette-link keeps-style" href="{% url 'get_palette' palette_id=palette.id %}{% if style_query %}?{{ style_query }}{% endif %}">
                                     <span class="palette-strip" style="background: {{ palette.preview_gradient }};" aria-hidden="true"></span>
                                     <span class="palette-label">{% if palette.name %}{{ palette.name }}{% else %}Palette {{ saved_palettes.start_index|add:forloop.counter0 }}{% endif %}</span></a>
-                                {% if user.is_authenticated and palette.user == user %}
-                                    <a href="{% url 'edit-palette' palette.id %}">Edit</a>
-                                    <a href="{% url 'delete-palette' palette.id %}">Delete</a>
-                                {% endif %}
                             </li>
                             {% empty %}
                             <li>No palettes saved yet.</li>

@@ -263,8 +263,23 @@ button:hover {
 
 .save-form-nav {
     display: flex;
+    flex-wrap: wrap;
+    justify-content: center;
     align-items: center;
     gap: 8px;
+}
+
+/* Delete stands apart from Save: outlined in red, filled red on hover */
+.nav-header li .save-form-nav .delete-palette-btn {
+    background-color: transparent;
+    border-color: #e57373;
+    color: #ffcdd2;
+}
+
+.nav-header li .save-form-nav .delete-palette-btn:hover,
+.nav-header li .save-form-nav .delete-palette-btn:focus-visible {
+    background-color: #c62828;
+    color: #fff;
 }
 
 /* The name box and Save button keep the nav buttons' size (140 x 30) at every screen width */

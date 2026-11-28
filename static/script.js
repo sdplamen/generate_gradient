@@ -586,3 +586,22 @@ document.addEventListener('DOMContentLoaded', () => {
         input.addEventListener('input', update);
     });
 });
+
+// Save Palette sends the colours as they are on the page now, including ones picked since the last reload,
+// and Delete asks first, since it cannot be undone
+document.addEventListener('DOMContentLoaded', () => {
+    const saveForm = document.querySelector('.save-form-nav');
+    if (!saveForm) return;
+
+    saveForm.addEventListener('submit', (event) => {
+        if (event.submitter && event.submitter.id === 'delete-palette-btn') {
+            const name = event.submitter.dataset.name || 'this palette';
+            if (!window.confirm(`Delete ${name}? This cannot be undone.`)) event.preventDefault();
+            return;
+        }
+        document.querySelectorAll('.color-input-form input[type="color"]').forEach(input => {
+            const hidden = saveForm.querySelector(`input[type="hidden"][name="${input.name}"]`);
+            if (hidden) hidden.value = input.value;
+        });
+    });
+});
